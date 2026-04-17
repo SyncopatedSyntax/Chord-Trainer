@@ -1001,9 +1001,24 @@ function Library({showDeg}){
           ))}
         </div>
         {showDeg&&uniqueDegs.length>0&&(
-          <div style={{padding:'9px 12px',background:'#13121f',borderRadius:'10px',border:'1px solid #2a2840'}}>
-            <div style={{fontSize:'10px',color:'#888',marginBottom:'5px',letterSpacing:'2px',textTransform:'uppercase'}}>Scale degrees</div>
-            <div style={{display:'flex',flexWrap:'wrap',gap:'5px'}}>{uniqueDegs.map(d=><span key={d} style={{background:DC[d]+'22',color:DC[d],padding:'2px 8px',borderRadius:'10px',fontSize:'12px',fontWeight:700}}>{d}</span>)}</div>
+          <div style={{padding:'10px 12px',background:'#13121f',borderRadius:'10px',border:'1px solid #2a2840'}}>
+            <div style={{fontSize:'10px',color:'#888',marginBottom:'8px',letterSpacing:'2px',textTransform:'uppercase'}}>Scale degree guide</div>
+            {/* Colored pills row */}
+            <div style={{display:'flex',flexWrap:'wrap',gap:'5px',marginBottom:'10px'}}>
+              {uniqueDegs.map(d=>(
+                <span key={d} style={{background:DC[d]+'22',color:DC[d],padding:'3px 10px',borderRadius:'10px',fontSize:'12px',fontWeight:700,border:`1px solid ${DC[d]}44`}}>{d}</span>
+              ))}
+            </div>
+            {/* Inline legend — one row per degree */}
+            <div style={{display:'flex',flexDirection:'column',gap:'5px'}}>
+              {uniqueDegs.map(d=>(
+                <div key={d} style={{display:'flex',alignItems:'center',gap:'8px',padding:'5px 8px',background:'#0f0e17',borderRadius:'7px',border:`1px solid ${DC[d]}33`}}>
+                  <div style={{width:'10px',height:'10px',borderRadius:'50%',background:DC[d],flexShrink:0}}/>
+                  <span style={{fontSize:'12px',fontWeight:700,color:DC[d],minWidth:'28px'}}>{d}</span>
+                  <span style={{fontSize:'11px',color:'#888',lineHeight:'1.3'}}>{DEG_HINT[d]||''}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -1334,7 +1349,7 @@ function ChordsOfDay({srsData,showDeg,onMarkReviewed}){
             {daily.map((chord,idx)=>{
               const ci=CATS[chord.cat],srs=srsData[chord.id],isNew=!srs,isDue=srs&&srs.nextDue<=todayStr(),done=reviewed.has(chord.id);
               return(
-                <div key={chord.id} style={{background:'#13121f',borderRadius:'11px',padding:'10px',border:`1px solid ${done?'#00b89444':ci.color+'33'}`,display:'flex',alignItems:'center',gap:'9px',opacity:done?0.55:1,transition:'opacity .3s'}}>
+                <div key={chord.id} style={{background:'#13121f',borderRadius:'11px',padding:'10px',border:`1px solid ${done?'#00b89444':ci.color+'33'}`,display:'flex',alignItems:'center',gap:'9px',opacity:done?0.55:1,transition:'opacity .3s,border-color .3s',userSelect:'none'}}>
                   <div style={{fontSize:'13px',fontWeight:900,color:'#444',minWidth:'13px',textAlign:'center'}}>{idx+1}</div>
                   <ChordDiagram v={chord.voicings[0]} showDeg={showDeg} size={0.76}/>
                   <div style={{flex:1,minWidth:0}}>
@@ -1348,7 +1363,21 @@ function ChordsOfDay({srsData,showDeg,onMarkReviewed}){
                     {srs&&<div style={{fontSize:'8px',color:'#555',marginTop:'1px'}}>{srs.reps} reps · next in {srs.interval}d</div>}
                     <div style={{marginTop:'5px'}}><PlayButtons v={chord.voicings[0]} size="sm"/></div>
                   </div>
-                  <button onClick={()=>!done&&mark(chord.id)} style={{background:done?'#00b89422':'#ffd93d22',color:done?'#00b894':'#ffd93d',border:`1px solid ${done?'#00b89444':'#ffd93d88'}`,padding:'7px 8px',borderRadius:'8px',cursor:done?'default':'pointer',fontSize:'11px',fontWeight:700,whiteSpace:'nowrap',minHeight:'40px',minWidth:'64px',transition:'all .2s'}}>{done?'✓ Done':'Got it'}</button>
+                  <button
+                    onClick={()=>!done&&mark(chord.id)}
+                    style={{
+                      background:done?'#00b89422':'#ffd93d22',
+                      color:done?'#00b894':'#ffd93d',
+                      border:`1px solid ${done?'#00b89444':'#ffd93d88'}`,
+                      padding:'7px 8px',borderRadius:'8px',
+                      cursor:done?'default':'pointer',
+                      fontSize:'11px',fontWeight:700,
+                      whiteSpace:'nowrap',minHeight:'40px',minWidth:'64px',
+                      pointerEvents:done?'none':'auto',
+                      transition:'background .2s,color .2s,border-color .2s',
+                      WebkitTapHighlightColor:'transparent',
+                    }}
+                  >{done?'✓ Done':'Got it'}</button>
                 </div>
               );
             })}
