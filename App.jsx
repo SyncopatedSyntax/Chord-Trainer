@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, memo } from "react";
 
 const DC={
   'R':'#ff4757','3':'#ffd93d','b3':'#ff9f43','7':'#ff6b6b','b7':'#fdcb6e',
@@ -1321,10 +1321,18 @@ function ProgressionOfDay({showDeg}){
   </div>);
 }
 
-function ChordsOfDay({srsData,showDeg,onMarkReviewed}){
+const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,onMarkReviewed}){
+  // Snapshot both daily chords AND srs data at mount — display never changes
+  // after first render, so App re-renders (from saveSrs/saveHist) can't cause glitches.
   const[daily]=useState(()=>getDailyChords(srsData));
+  const[srsSnap]=useState(()=>({...srsData}));
   const[reviewed,setReviewed]=useState(new Set());
-  const mark=id=>{setReviewed(p=>new Set([...p,id]));onMarkReviewed(id);};
+
+  const mark=useCallback(id=>{
+    setReviewed(p=>new Set([...p,id]));
+    onMarkReviewed(id); // fire-and-forget — state updates happen in parent but don't re-render us
+  },[onMarkReviewed]);
+
   return(<div>
     <div style={{borderBottom:'1px solid #1a1928',paddingTop:'14px',paddingBottom:'14px'}}><ProgressionOfDay showDeg={showDeg}/></div>
     <div style={{padding:'14px',maxWidth:'560px',margin:'0 auto'}}>
@@ -1347,9 +1355,25 @@ function ChordsOfDay({srsData,showDeg,onMarkReviewed}){
           <div style={{marginBottom:'7px'}}><span style={{background:'#1a1928',borderRadius:'8px',padding:'3px 10px',fontSize:'10px',color:'#ffd93d'}}>{reviewed.size}/{daily.length} reviewed</span></div>
           <div style={{display:'flex',flexDirection:'column',gap:'7px'}}>
             {daily.map((chord,idx)=>{
-              const ci=CATS[chord.cat],srs=srsData[chord.id],isNew=!srs,isDue=srs&&srs.nextDue<=todayStr(),done=reviewed.has(chord.id);
+              // Use SNAPSHOT values — stable, never changes mid-session
+              const ci=CATS[chord.cat];
+              const srsEntry=srsSnap[chord.id];
+              const isNew=!srsEntry;
+              const isDue=srsEntry&&srsEntry.nextDue<=todayStr();
+              const done=reviewed.has(chord.id);
               return(
-                <div key={chord.id} style={{background:'#13121f',borderRadius:'11px',padding:'10px',border:`1px solid ${done?'#00b89444':ci.color+'33'}`,display:'flex',alignItems:'center',gap:'9px',opacity:done?0.55:1,transition:'opacity .3s,border-color .3s',userSelect:'none'}}>
+                <div key={chord.id} style={{
+                  background:'#13121f',borderRadius:'11px',padding:'10px',
+                  // Stable border — no transition (avoids iOS composite layer churn)
+                  border:`1px solid ${done?'#00b89444':ci.color+'33'}`,
+                  display:'flex',alignItems:'center',gap:'9px',
+                  // Use willChange + transform for GPU-composited opacity — faster than plain opacity on iOS
+                  opacity:done?0.55:1,
+                  willChange:'opacity',
+                  transition:'opacity .25s ease',
+                  userSelect:'none',
+                  WebkitTapHighlightColor:'transparent',
+                }}>
                   <div style={{fontSize:'13px',fontWeight:900,color:'#444',minWidth:'13px',textAlign:'center'}}>{idx+1}</div>
                   <ChordDiagram v={chord.voicings[0]} showDeg={showDeg} size={0.76}/>
                   <div style={{flex:1,minWidth:0}}>
@@ -1360,7 +1384,10 @@ function ChordsOfDay({srsData,showDeg,onMarkReviewed}){
                     </div>
                     <div style={{fontSize:'8px',color:ci.color,marginBottom:'1px'}}>{ci.label}</div>
                     <div style={{fontSize:'8px',color:'#777'}}>{chord.voicings[0].label}</div>
-                    {srs&&<div style={{fontSize:'8px',color:'#555',marginTop:'1px'}}>{srs.reps} reps · next in {srs.interval}d</div>}
+                    {/* Always render this line (stable height) — no conditional mount/unmount */}
+                    <div style={{fontSize:'8px',color:'#555',marginTop:'1px',minHeight:'11px'}}>
+                      {srsEntry?`${srsEntry.reps} reps · next in ${srsEntry.interval}d`:'\u00a0'}
+                    </div>
                     <div style={{marginTop:'5px'}}><PlayButtons v={chord.voicings[0]} size="sm"/></div>
                   </div>
                   <button
@@ -1372,10 +1399,13 @@ function ChordsOfDay({srsData,showDeg,onMarkReviewed}){
                       padding:'7px 8px',borderRadius:'8px',
                       cursor:done?'default':'pointer',
                       fontSize:'11px',fontWeight:700,
-                      whiteSpace:'nowrap',minHeight:'40px',minWidth:'64px',
+                      whiteSpace:'nowrap',minHeight:'44px',minWidth:'64px',
+                      // Hard lock: once done, no pointer events whatsoever
                       pointerEvents:done?'none':'auto',
+                      // Only transition the visual properties, never layout/text
                       transition:'background .2s,color .2s,border-color .2s',
                       WebkitTapHighlightColor:'transparent',
+                      touchAction:'manipulation',
                     }}
                   >{done?'✓ Done':'Got it'}</button>
                 </div>
@@ -1386,7 +1416,10 @@ function ChordsOfDay({srsData,showDeg,onMarkReviewed}){
       )}
     </div>
   </div>);
-}
+// Custom memo comparator: only re-render when showDeg changes.
+// srsData prop changes (from App's saveSrs/saveHist) are ignored because
+// we already snapshotted it at mount. onMarkReviewed is stable (ref pattern in App).
+},(prev,next)=>prev.showDeg===next.showDeg);
 
 function HelpTab(){
   const[openTier,setOpenTier]=useState(null);
@@ -1479,6 +1512,34 @@ export default function App(){
   const[showData,setShowData]=useState(false);
   const[importMsg,setImportMsg]=useState('');
 
+  // Refs for async callbacks — always fresh values, never cause re-renders
+  const srsRef=useRef(srs);
+  const histRef=useRef(hist);
+  const degHistRef=useRef(degHist);
+  srsRef.current=srs;
+  histRef.current=hist;
+  degHistRef.current=degHist;
+
+  // Inject global mobile CSS once at mount
+  useEffect(()=>{
+    const style=document.createElement('style');
+    style.textContent=`
+      *{-webkit-tap-highlight-color:transparent;box-sizing:border-box;}
+      button,a,label,[role=button]{touch-action:manipulation;-webkit-user-select:none;user-select:none;}
+      body{overscroll-behavior-y:none;-webkit-overflow-scrolling:touch;}
+      input,textarea,select{font-size:16px!important;}
+    `;
+    document.head.appendChild(style);
+    // Theme + viewport
+    const setMeta=(name,content)=>{let m=document.querySelector(`meta[name="${name}"]`);if(!m){m=document.createElement('meta');m.name=name;document.head.appendChild(m);}m.content=content;};
+    setMeta('theme-color','#0f0e17');
+    setMeta('viewport','width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover');
+    setMeta('apple-mobile-web-app-capable','yes');
+    setMeta('apple-mobile-web-app-status-bar-style','black-translucent');
+    setMeta('apple-mobile-web-app-title','ChordTrainer');
+    return()=>{document.head.removeChild(style);};
+  },[]);
+
   useEffect(()=>{
     (async()=>{
       try{
@@ -1498,21 +1559,24 @@ export default function App(){
   const saveDegHist=async d=>{setDegHist(d);try{await window.storage.set('ct_degh',JSON.stringify(d));}catch(e){}};
 
   const onChordQuizDone=useCallback(async results=>{
-    const ns={...srs},nh=[...hist],td=todayStr();
+    const ns={...srsRef.current},nh=[...histRef.current],td=todayStr();
     for(const r of results){ns[r.id]=updateSRS(ns[r.id],r.correct);nh.push({id:r.id,correct:r.correct,date:td});}
     await saveSrs(ns);await saveHist(nh);
-  },[srs,hist]);
+  },[]); // eslint-disable-line
 
   const onDegDone=useCallback(async results=>{
-    const nd=[...degHist,...results.map(r=>({...r,date:todayStr()}))];
+    const nd=[...degHistRef.current,...results.map(r=>({...r,date:todayStr()}))];
     await saveDegHist(nd);
-  },[degHist]);
+  },[]); // eslint-disable-line
 
+  // STABLE callback — empty deps, reads fresh state via refs.
+  // ChordsOfDay is React.memo'd and ignores srsData/onMarkReviewed prop changes,
+  // so the 2 setSrs+setHist calls here never cause ChordsOfDay to re-render.
   const onMarkReviewed=useCallback(async id=>{
-    const ns={...srs,[id]:updateSRS(srs[id],true)};
-    const nh=[...hist,{id,correct:true,date:todayStr()}];
+    const ns={...srsRef.current,[id]:updateSRS(srsRef.current[id],true)};
+    const nh=[...histRef.current,{id,correct:true,date:todayStr()}];
     await saveSrs(ns);await saveHist(nh);
-  },[srs,hist]);
+  },[]); // eslint-disable-line
 
   const exportData=()=>{
     const json=JSON.stringify({srs,hist,degHist,v:2,exported:new Date().toISOString()},null,2);
@@ -1538,20 +1602,20 @@ export default function App(){
     reader.readAsText(file);
   };
 
-  if(!loaded)return(<div style={{background:'#0f0e17',minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',color:'#ffd93d',fontSize:'16px'}}>Loading…</div>);
+  if(!loaded)return(<div style={{background:'#0f0e17',minHeight:'100vh',minHeight:'-webkit-fill-available',display:'flex',alignItems:'center',justifyContent:'center',color:'#ffd93d',fontSize:'16px'}}>Loading…</div>);
 
   const TABS=[{id:'daily',label:'Today',icon:'🌅'},{id:'library',label:'Library',icon:'📚'},{id:'progs',label:'Progs',icon:'🎵'},{id:'quiz',label:'Quiz',icon:'🎯'},{id:'weak',label:'Weak',icon:'💪'},{id:'help',label:'Guide',icon:'📖'}];
 
   return(
-    <div style={{background:'#0f0e17',minHeight:'100vh',color:'#fffffe',fontFamily:"'Segoe UI',system-ui,sans-serif",maxWidth:'100vw',overflowX:'hidden'}}>
-      <div style={{padding:'10px 12px',borderBottom:'1px solid #1a1928',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}>
+    <div style={{background:'#0f0e17',minHeight:'100vh',color:'#fffffe',fontFamily:"'Segoe UI',system-ui,sans-serif",maxWidth:'100vw',overflowX:'hidden',WebkitFontSmoothing:'antialiased'}}>
+      <div style={{padding:'10px 12px',paddingTop:'max(10px,env(safe-area-inset-top))',borderBottom:'1px solid #1a1928',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}>
         <div style={{display:'flex',flexDirection:'column'}}>
           <div style={{fontSize:'16px',fontWeight:900,lineHeight:'1.1'}}>🎸 <span style={{color:'#ffd93d'}}>Chord</span>Trainer</div>
           <div style={{fontSize:'9px',color:'#555',letterSpacing:'1px',paddingLeft:'22px'}}>by Zak</div>
         </div>
         <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'7px',flexWrap:'wrap',justifyContent:'flex-end'}}>
-          <button onClick={()=>setShowData(p=>!p)} style={{background:'transparent',border:'1px solid #2a2840',color:'#888',padding:'5px 9px',borderRadius:'7px',cursor:'pointer',fontSize:'10px',minHeight:'34px',whiteSpace:'nowrap'}}>⬆⬇ Data</button>
-          <button onClick={()=>setShowDeg(p=>!p)} style={{padding:'9px 16px',borderRadius:'9px',cursor:'pointer',fontSize:'13px',fontWeight:800,border:`2px solid ${showDeg?'#ffd93d':'#555'}`,background:showDeg?'#ffd93d':'transparent',color:showDeg?'#111':'#bbb',transition:'all 0.2s',minHeight:'40px',whiteSpace:'nowrap',boxShadow:showDeg?'0 0 14px #ffd93d55':'none'}}>
+          <button onClick={()=>setShowData(p=>!p)} style={{background:'transparent',border:'1px solid #2a2840',color:'#888',padding:'5px 9px',borderRadius:'7px',cursor:'pointer',fontSize:'10px',minHeight:'36px',whiteSpace:'nowrap',touchAction:'manipulation'}}>⬆⬇ Data</button>
+          <button onClick={()=>setShowDeg(p=>!p)} style={{padding:'9px 16px',borderRadius:'9px',cursor:'pointer',fontSize:'13px',fontWeight:800,border:`2px solid ${showDeg?'#ffd93d':'#555'}`,background:showDeg?'#ffd93d':'transparent',color:showDeg?'#111':'#bbb',transition:'background .2s,color .2s,border-color .2s,box-shadow .2s',minHeight:'44px',whiteSpace:'nowrap',boxShadow:showDeg?'0 0 14px #ffd93d55':'none',touchAction:'manipulation'}}>
             {showDeg?'✦ Degrees ON':'Scale Degrees'}
           </button>
         </div>
@@ -1559,16 +1623,18 @@ export default function App(){
       {showData&&(
         <div style={{background:'#13121f',borderBottom:'1px solid #1a1928',padding:'9px 12px',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}>
           <span style={{fontSize:'10px',color:'#888'}}>Progress backup:</span>
-          <button onClick={exportData} style={{background:'#a29bfe22',color:'#a29bfe',border:'1px solid #a29bfe44',padding:'5px 12px',borderRadius:'7px',cursor:'pointer',fontSize:'10px',fontWeight:700,minHeight:'34px'}}>Export ↓</button>
-          <label style={{background:'#4ecdc422',color:'#4ecdc4',border:'1px solid #4ecdc444',padding:'5px 12px',borderRadius:'7px',cursor:'pointer',fontSize:'10px',fontWeight:700,minHeight:'34px',display:'flex',alignItems:'center'}}>Import ↑<input type="file" accept=".json" onChange={importData} style={{display:'none'}}/></label>
+          <button onClick={exportData} style={{background:'#a29bfe22',color:'#a29bfe',border:'1px solid #a29bfe44',padding:'5px 12px',borderRadius:'7px',cursor:'pointer',fontSize:'10px',fontWeight:700,minHeight:'36px',touchAction:'manipulation'}}>Export ↓</button>
+          <label style={{background:'#4ecdc422',color:'#4ecdc4',border:'1px solid #4ecdc444',padding:'5px 12px',borderRadius:'7px',cursor:'pointer',fontSize:'10px',fontWeight:700,minHeight:'36px',display:'flex',alignItems:'center',touchAction:'manipulation'}}>Import ↑<input type="file" accept=".json" onChange={importData} style={{display:'none'}}/></label>
           {importMsg&&<span style={{fontSize:'10px',color:importMsg.startsWith('✓')?'#00b894':'#ff6363',fontWeight:700}}>{importMsg}</span>}
           <span style={{fontSize:'9px',color:'#444',marginLeft:'auto'}}>{Object.keys(srs).length} SRS · {hist.length} history · {degHist.length} deg</span>
         </div>
       )}
-      <div style={{display:'flex',borderBottom:'1px solid #1a1928',overflowX:'auto'}}>
-        {TABS.map(t=>(<button key={t.id} onClick={()=>setTab(t.id)} style={{flex:'0 0 auto',padding:'10px 10px',background:'transparent',border:'none',cursor:'pointer',fontSize:'10px',fontWeight:600,color:tab===t.id?'#ffd93d':'#888',borderBottom:tab===t.id?'2px solid #ffd93d':'2px solid transparent',whiteSpace:'nowrap',minHeight:'44px'}}>{t.icon} {t.label}</button>))}
+      {/* Tab bar — 44px min-height per Apple HIG; overflowX hidden but scrollable to avoid clipping */}
+      <div style={{display:'flex',borderBottom:'1px solid #1a1928',overflowX:'auto',WebkitOverflowScrolling:'touch',scrollbarWidth:'none'}}>
+        {TABS.map(t=>(<button key={t.id} onClick={()=>setTab(t.id)} style={{flex:'0 0 auto',padding:'10px 10px',background:'transparent',border:'none',cursor:'pointer',fontSize:'10px',fontWeight:600,color:tab===t.id?'#ffd93d':'#888',borderBottom:tab===t.id?'2px solid #ffd93d':'2px solid transparent',whiteSpace:'nowrap',minHeight:'44px',touchAction:'manipulation'}}>{t.icon} {t.label}</button>))}
       </div>
-      <div style={{paddingBottom:'32px'}}>
+      {/* Safe-area bottom padding for iPhone home indicator */}
+      <div style={{paddingBottom:'max(32px,env(safe-area-inset-bottom))'}}>
         {tab==='daily'&&<ChordsOfDay srsData={srs} showDeg={showDeg} onMarkReviewed={onMarkReviewed}/>}
         {tab==='library'&&<Library showDeg={showDeg}/>}
         {tab==='progs'&&<ProgressionsTab showDeg={showDeg}/>}
