@@ -899,7 +899,101 @@ function ProgressionsTab({showDeg}){
   );
 }
 
-function Library({showDeg}){
+
+// ── CHORD DETAIL ─────────────────────────────────────────────────────────
+// Standalone detail view — shared by Library and ChordsOfDay.
+// Automatically enables Scale Degrees while open and restores prior state.
+function ChordDetail({chord,onBack,showDeg,setShowDeg}){
+  const[transRoot,setTransRoot]=useState(null);
+
+  // Auto-enable degrees on open, restore on close
+  useEffect(()=>{
+    const prev=showDeg;
+    setShowDeg(true);
+    return()=>setShowDeg(prev);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[]);
+
+  if(!chord)return null;
+  const ci=CATS[chord.cat];
+  const currentRoot=getRootNote(chord.voicings[0]);
+  const canTranspose=chord.movable&&currentRoot!==null&&chord.voicings[0].deg.some((d,i)=>d==='R'&&chord.voicings[0].str[i]>0);
+  const displayVoicings=transRoot===null?chord.voicings:chord.voicings.map(v=>transposeVoicing(v,transRoot));
+  const uniqueDegs=[...new Set(displayVoicings[0].deg?.filter(Boolean)||[])];
+
+  return(
+    <div style={{padding:'14px',maxWidth:'560px',margin:'0 auto'}}>
+      <button onClick={onBack} style={{background:'transparent',border:'1px solid #2a2840',color:'#aaa',padding:'5px 14px',borderRadius:'8px',cursor:'pointer',marginBottom:'12px',fontSize:'12px',touchAction:'manipulation'}}>← Back</button>
+      <div style={{textAlign:'center',marginBottom:'14px'}}>
+        <span style={{fontSize:'10px',color:ci.color,fontWeight:700,letterSpacing:'3px',textTransform:'uppercase',background:ci.color+'18',padding:'3px 10px',borderRadius:'20px'}}>{ci.label}</span>
+        <div style={{fontSize:'24px',fontWeight:900,margin:'8px 0 2px',color:'#fff'}}>{chord.name}</div>
+        <div style={{fontSize:'13px',color:'#aaa',fontStyle:'italic'}}>{chord.sym}</div>
+      </div>
+      {canTranspose&&(()=>{
+        const validRoots=getValidTransposeRoots(chord.voicings[0]);
+        return(
+          <div style={{marginBottom:'14px',background:'#13121f',borderRadius:'10px',padding:'10px 12px',border:'1px solid #2a2840'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'7px'}}>
+              <div style={{fontSize:'10px',color:'#888',textTransform:'uppercase',letterSpacing:'2px'}}>Transpose root</div>
+              {transRoot!==null&&<button onClick={()=>setTransRoot(null)} style={{fontSize:'10px',color:'#aaa',background:'transparent',border:'1px solid #2a2840',borderRadius:'6px',padding:'2px 8px',cursor:'pointer',touchAction:'manipulation'}}>Reset</button>}
+            </div>
+            <div style={{display:'flex',flexWrap:'wrap',gap:'4px'}}>
+              {NOTE_NAMES.map((n,i)=>{
+                const isActive=transRoot===null?i===currentRoot:i===transRoot;
+                const isOriginal=i===currentRoot;
+                const canUse=validRoots.has(i);
+                return(
+                  <button key={i} onClick={()=>canUse&&setTransRoot(i===currentRoot?null:i)} disabled={!canUse}
+                    style={{padding:'5px 8px',borderRadius:'7px',cursor:canUse?'pointer':'not-allowed',fontSize:'12px',fontWeight:700,
+                      border:`1px solid ${isActive?'#ffd93d':canUse?'#2a2840':'#1a1928'}`,
+                      background:isActive?'#ffd93d22':canUse?'transparent':'transparent',
+                      color:isActive?'#ffd93d':canUse?'#888':'#333',
+                      transition:'all .15s',minHeight:'32px',
+                      textDecoration:!canUse?'line-through':'none',opacity:!canUse?0.35:1,
+                      touchAction:'manipulation'}}>
+                    {n}{isOriginal&&transRoot!==null?'*':''}
+                  </button>
+                );
+              })}
+            </div>
+            {transRoot!==null&&<div style={{fontSize:'11px',color:'#ffd93d',marginTop:'6px'}}>Showing {NOTE_NAMES[transRoot]} · fret {displayVoicings[0].sf} &nbsp;<span style={{color:'#666',fontSize:'10px'}}>* = original root ({NOTE_NAMES[currentRoot]})</span></div>}
+            {transRoot===null&&<div style={{fontSize:'10px',color:'#555',marginTop:'5px'}}>Greyed notes cannot be played in this shape</div>}
+          </div>
+        );
+      })()}
+      <div style={{display:'flex',flexWrap:'wrap',gap:'16px',justifyContent:'center',marginBottom:'14px'}}>
+        {displayVoicings.map((v,i)=>(
+          <div key={i} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'8px'}}>
+            <div style={{background:'#13121f',borderRadius:'12px',padding:'16px',border:`2px solid ${ci.color}44`}}><ChordDiagram v={v} showDeg={true} size={1.85}/></div>
+            <div style={{fontSize:'10px',color:'#888',maxWidth:'160px',textAlign:'center'}}>{v.label}</div>
+            <PlayButtons v={v}/>
+          </div>
+        ))}
+      </div>
+      {uniqueDegs.length>0&&(
+        <div style={{padding:'10px 12px',background:'#13121f',borderRadius:'10px',border:'1px solid #2a2840'}}>
+          <div style={{fontSize:'10px',color:'#888',marginBottom:'8px',letterSpacing:'2px',textTransform:'uppercase'}}>Scale degree guide</div>
+          <div style={{display:'flex',flexWrap:'wrap',gap:'5px',marginBottom:'10px'}}>
+            {uniqueDegs.map(d=>(
+              <span key={d} style={{background:DC[d]+'22',color:DC[d],padding:'3px 10px',borderRadius:'10px',fontSize:'12px',fontWeight:700,border:`1px solid ${DC[d]}44`}}>{d}</span>
+            ))}
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:'5px'}}>
+            {uniqueDegs.map(d=>(
+              <div key={d} style={{display:'flex',alignItems:'center',gap:'8px',padding:'5px 8px',background:'#0f0e17',borderRadius:'7px',border:`1px solid ${DC[d]}33`}}>
+                <div style={{width:'10px',height:'10px',borderRadius:'50%',background:DC[d],flexShrink:0}}/>
+                <span style={{fontSize:'12px',fontWeight:700,color:DC[d],minWidth:'28px'}}>{d}</span>
+                <span style={{fontSize:'11px',color:'#888',lineHeight:'1.3'}}>{DEG_HINT[d]||''}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Library({showDeg,setShowDeg}){
   const[cat,setCat]=useState('all');
   const[sel,setSel]=useState(null);
   const[transRoot,setTransRoot]=useState(null);
@@ -947,82 +1041,7 @@ function Library({showDeg}){
   const handleSel=id=>{setSel(id);setTransRoot(null);};
 
   if(chord){
-    const ci=CATS[chord.cat];
-    const currentRoot=getRootNote(chord.voicings[0]);
-    const canTranspose=chord.movable&&currentRoot!==null&&chord.voicings[0].deg.some((d,i)=>d==='R'&&chord.voicings[0].str[i]>0);
-    const displayVoicings=transRoot===null?chord.voicings:chord.voicings.map(v=>transposeVoicing(v,transRoot));
-    const uniqueDegs=[...new Set(displayVoicings[0].deg?.filter(Boolean)||[])];
-    return(
-      <div style={{padding:'14px',maxWidth:'560px',margin:'0 auto'}}>
-        <button onClick={()=>{setSel(null);setTransRoot(null);}} style={{background:'transparent',border:'1px solid #2a2840',color:'#aaa',padding:'5px 14px',borderRadius:'8px',cursor:'pointer',marginBottom:'12px',fontSize:'12px'}}>← Back</button>
-        <div style={{textAlign:'center',marginBottom:'14px'}}>
-          <span style={{fontSize:'10px',color:ci.color,fontWeight:700,letterSpacing:'3px',textTransform:'uppercase',background:ci.color+'18',padding:'3px 10px',borderRadius:'20px'}}>{ci.label}</span>
-          <div style={{fontSize:'24px',fontWeight:900,margin:'8px 0 2px',color:'#fff'}}>{chord.name}</div>
-          <div style={{fontSize:'13px',color:'#aaa',fontStyle:'italic'}}>{chord.sym}</div>
-        </div>
-        {canTranspose&&(()=>{
-          const validRoots=getValidTransposeRoots(chord.voicings[0]);
-          return(
-            <div style={{marginBottom:'14px',background:'#13121f',borderRadius:'10px',padding:'10px 12px',border:'1px solid #2a2840'}}>
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'7px'}}>
-                <div style={{fontSize:'10px',color:'#888',textTransform:'uppercase',letterSpacing:'2px'}}>Transpose root</div>
-                {transRoot!==null&&<button onClick={()=>setTransRoot(null)} style={{fontSize:'10px',color:'#aaa',background:'transparent',border:'1px solid #2a2840',borderRadius:'6px',padding:'2px 8px',cursor:'pointer'}}>Reset</button>}
-              </div>
-              <div style={{display:'flex',flexWrap:'wrap',gap:'4px'}}>
-                {NOTE_NAMES.map((n,i)=>{
-                  const isActive=transRoot===null?i===currentRoot:i===transRoot;
-                  const isOriginal=i===currentRoot;
-                  const canUse=validRoots.has(i);
-                  return(
-                    <button key={i} onClick={()=>canUse&&setTransRoot(i===currentRoot?null:i)} disabled={!canUse}
-                      style={{padding:'5px 8px',borderRadius:'7px',cursor:canUse?'pointer':'not-allowed',fontSize:'12px',fontWeight:700,
-                        border:`1px solid ${isActive?'#ffd93d':canUse?'#2a2840':'#1a1928'}`,
-                        background:isActive?'#ffd93d22':canUse?'transparent':'transparent',
-                        color:isActive?'#ffd93d':canUse?'#888':'#333',
-                        transition:'all .15s',minHeight:'32px',
-                        textDecoration:!canUse?'line-through':'none',opacity:!canUse?0.35:1}}>
-                      {n}{isOriginal&&transRoot!==null?'*':''}
-                    </button>
-                  );
-                })}
-              </div>
-              {transRoot!==null&&<div style={{fontSize:'11px',color:'#ffd93d',marginTop:'6px'}}>Showing {NOTE_NAMES[transRoot]} · fret {displayVoicings[0].sf} &nbsp;<span style={{color:'#666',fontSize:'10px'}}>* = original root ({NOTE_NAMES[currentRoot]})</span></div>}
-              {transRoot===null&&<div style={{fontSize:'10px',color:'#555',marginTop:'5px'}}>Greyed notes cannot be played in this shape</div>}
-            </div>
-          );
-        })()}
-        <div style={{display:'flex',flexWrap:'wrap',gap:'16px',justifyContent:'center',marginBottom:'14px'}}>
-          {displayVoicings.map((v,i)=>(
-            <div key={i} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'8px'}}>
-              <div style={{background:'#13121f',borderRadius:'12px',padding:'16px',border:`2px solid ${ci.color}44`}}><ChordDiagram v={v} showDeg={showDeg} size={1.85}/></div>
-              <div style={{fontSize:'10px',color:'#888',maxWidth:'160px',textAlign:'center'}}>{v.label}</div>
-              <PlayButtons v={v}/>
-            </div>
-          ))}
-        </div>
-        {showDeg&&uniqueDegs.length>0&&(
-          <div style={{padding:'10px 12px',background:'#13121f',borderRadius:'10px',border:'1px solid #2a2840'}}>
-            <div style={{fontSize:'10px',color:'#888',marginBottom:'8px',letterSpacing:'2px',textTransform:'uppercase'}}>Scale degree guide</div>
-            {/* Colored pills row */}
-            <div style={{display:'flex',flexWrap:'wrap',gap:'5px',marginBottom:'10px'}}>
-              {uniqueDegs.map(d=>(
-                <span key={d} style={{background:DC[d]+'22',color:DC[d],padding:'3px 10px',borderRadius:'10px',fontSize:'12px',fontWeight:700,border:`1px solid ${DC[d]}44`}}>{d}</span>
-              ))}
-            </div>
-            {/* Inline legend — one row per degree */}
-            <div style={{display:'flex',flexDirection:'column',gap:'5px'}}>
-              {uniqueDegs.map(d=>(
-                <div key={d} style={{display:'flex',alignItems:'center',gap:'8px',padding:'5px 8px',background:'#0f0e17',borderRadius:'7px',border:`1px solid ${DC[d]}33`}}>
-                  <div style={{width:'10px',height:'10px',borderRadius:'50%',background:DC[d],flexShrink:0}}/>
-                  <span style={{fontSize:'12px',fontWeight:700,color:DC[d],minWidth:'28px'}}>{d}</span>
-                  <span style={{fontSize:'11px',color:'#888',lineHeight:'1.3'}}>{DEG_HINT[d]||''}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
+    return <ChordDetail chord={chord} onBack={()=>{setSel(null);setTransRoot(null);}} showDeg={showDeg} setShowDeg={setShowDeg}/>;
   }
 
   // ── Helper: chord type strip (shared by both filter modes)
@@ -1296,7 +1315,29 @@ function WeakTab({history,degHist,srs,showDeg,onComplete}){
   </div>);
 }
 
-function ProgressionOfDay({showDeg}){
+// Build a ChordDetail-compatible object directly from a progression chord {sym, rn, v}.
+// Always uses the exact inline voicing shown in the progression — no library lookup.
+function progChordToDetail(c){
+  const s=c.sym||'';
+  let cat='shell';
+  if(/ø|m7b5/i.test(s))cat='altered';
+  else if(/dim|°/i.test(s))cat='altered';
+  else if(/maj7|Δ/i.test(s))cat='shell';
+  else if(/m7|min7/i.test(s))cat='shell';
+  else if(/7/.test(s)&&!/maj/i.test(s))cat='shell';
+  else if(/^[A-G][#b]?m/.test(s))cat='cowboy';
+  else cat='cowboy';
+  return{
+    id:`prog_${s}_${c.rn}`,
+    name:s,
+    sym:s,
+    cat,
+    movable:false,
+    voicings:[{label:`${c.rn} — from Progression of the Day`,str:c.v.str,deg:c.v.deg,sf:c.v.sf}],
+  };
+}
+
+function ProgressionOfDay({showDeg,setSelChord}){
   const prog=useMemo(()=>{const d=new Date();const doy=Math.floor((d-new Date(d.getFullYear(),0,0))/86400000);return PROGS[doy%PROGS.length];},[]);
   return(<div style={{padding:'0 14px 14px',maxWidth:'560px',margin:'0 auto'}}>
     <div style={{marginBottom:'8px'}}>
@@ -1309,7 +1350,9 @@ function ProgressionOfDay({showDeg}){
     </div>
     <div style={{display:'flex',gap:'8px',paddingBottom:'4px',alignItems:'flex-start',justifyContent:'center',flexWrap:'wrap'}}>
       {prog.chords.map((c,i)=>(<div key={i} style={{flexShrink:0,textAlign:'center',display:'flex',flexDirection:'column',alignItems:'center'}}>
-        <div style={{background:'#13121f',borderRadius:'9px',padding:'7px 5px 6px',border:'1px solid #2a2840',minWidth:'84px'}}>
+        <div
+          onClick={()=>setSelChord&&setSelChord(progChordToDetail(c))}
+          style={{background:'#13121f',borderRadius:'9px',padding:'7px 5px 6px',border:'1px solid #2a2840',minWidth:'84px',cursor:setSelChord?'pointer':'default',touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
           <ChordDiagram v={c.v} showDeg={showDeg} size={0.78}/>
           <div style={{fontSize:'12px',fontWeight:900,color:'#fff',marginTop:'2px'}}>{c.sym}</div>
           <div style={{fontSize:'8px',color:'#666',marginTop:'1px',marginBottom:'5px'}}>{c.rn}</div>
@@ -1321,20 +1364,26 @@ function ProgressionOfDay({showDeg}){
   </div>);
 }
 
-const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,onMarkReviewed}){
+const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkReviewed}){
   // Snapshot both daily chords AND srs data at mount — display never changes
   // after first render, so App re-renders (from saveSrs/saveHist) can't cause glitches.
   const[daily]=useState(()=>getDailyChords(srsData));
   const[srsSnap]=useState(()=>({...srsData}));
   const[reviewed,setReviewed]=useState(new Set());
+  const[selChord,setSelChord]=useState(null);
 
   const mark=useCallback(id=>{
     setReviewed(p=>new Set([...p,id]));
     onMarkReviewed(id); // fire-and-forget — state updates happen in parent but don't re-render us
   },[onMarkReviewed]);
 
+  // When a chord detail is open, render it (ChordDetail handles auto-showDeg internally)
+  if(selChord){
+    return <ChordDetail chord={selChord} onBack={()=>setSelChord(null)} showDeg={showDeg} setShowDeg={setShowDeg}/>;
+  }
+
   return(<div>
-    <div style={{borderBottom:'1px solid #1a1928',paddingTop:'14px',paddingBottom:'14px'}}><ProgressionOfDay showDeg={showDeg}/></div>
+    <div style={{borderBottom:'1px solid #1a1928',paddingTop:'14px',paddingBottom:'14px'}}><ProgressionOfDay showDeg={showDeg} setSelChord={setSelChord}/></div>
     <div style={{padding:'14px',maxWidth:'560px',margin:'0 auto'}}>
       <div style={{marginBottom:'10px'}}>
         <div style={{fontSize:'16px',fontWeight:900,color:'#fff'}}>Chords of the Day</div>
@@ -1364,10 +1413,8 @@ const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,onMarkReviewed}){
               return(
                 <div key={chord.id} style={{
                   background:'#13121f',borderRadius:'11px',padding:'10px',
-                  // Stable border — no transition (avoids iOS composite layer churn)
                   border:`1px solid ${done?'#00b89444':ci.color+'33'}`,
                   display:'flex',alignItems:'center',gap:'9px',
-                  // Use willChange + transform for GPU-composited opacity — faster than plain opacity on iOS
                   opacity:done?0.55:1,
                   willChange:'opacity',
                   transition:'opacity .25s ease',
@@ -1375,20 +1422,26 @@ const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,onMarkReviewed}){
                   WebkitTapHighlightColor:'transparent',
                 }}>
                   <div style={{fontSize:'13px',fontWeight:900,color:'#444',minWidth:'13px',textAlign:'center'}}>{idx+1}</div>
-                  <ChordDiagram v={chord.voicings[0]} showDeg={showDeg} size={0.76}/>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:'flex',alignItems:'center',gap:'4px',flexWrap:'wrap',marginBottom:'1px'}}>
-                      <span style={{fontWeight:700,fontSize:'12px',color:'#fff'}}>{chord.name}</span>
-                      {isNew&&<span style={{fontSize:'8px',background:'#a29bfe22',color:'#a29bfe',padding:'1px 5px',borderRadius:'5px',fontWeight:700}}>NEW</span>}
-                      {isDue&&!isNew&&<span style={{fontSize:'8px',background:'#ffd93d22',color:'#ffd93d',padding:'1px 5px',borderRadius:'5px',fontWeight:700}}>REVIEW</span>}
+                  {/* Tappable area — opens chord detail */}
+                  <div onClick={()=>setSelChord(chord)} style={{display:'flex',alignItems:'center',gap:'9px',flex:1,minWidth:0,cursor:'pointer',touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
+                    <ChordDiagram v={chord.voicings[0]} showDeg={showDeg} size={0.76}/>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{display:'flex',alignItems:'center',gap:'4px',flexWrap:'wrap',marginBottom:'1px'}}>
+                        <span style={{fontWeight:700,fontSize:'12px',color:'#fff'}}>{chord.name}</span>
+                        {isNew&&<span style={{fontSize:'8px',background:'#a29bfe22',color:'#a29bfe',padding:'1px 5px',borderRadius:'5px',fontWeight:700}}>NEW</span>}
+                        {isDue&&!isNew&&<span style={{fontSize:'8px',background:'#ffd93d22',color:'#ffd93d',padding:'1px 5px',borderRadius:'5px',fontWeight:700}}>REVIEW</span>}
+                      </div>
+                      <div style={{fontSize:'8px',color:ci.color,marginBottom:'1px'}}>{ci.label}</div>
+                      <div style={{fontSize:'8px',color:'#777'}}>{chord.voicings[0].label}</div>
+                      {/* Always render this line (stable height) — no conditional mount/unmount */}
+                      <div style={{fontSize:'8px',color:'#555',marginTop:'1px',minHeight:'11px'}}>
+                        {srsEntry?`${srsEntry.reps} reps · next in ${srsEntry.interval}d`:'\u00a0'}
+                      </div>
+                      <div style={{marginTop:'5px',display:'flex',alignItems:'center',gap:'5px'}}>
+                        <PlayButtons v={chord.voicings[0]} size="sm"/>
+                        <span style={{fontSize:'9px',color:'#333'}}>· tap to explore</span>
+                      </div>
                     </div>
-                    <div style={{fontSize:'8px',color:ci.color,marginBottom:'1px'}}>{ci.label}</div>
-                    <div style={{fontSize:'8px',color:'#777'}}>{chord.voicings[0].label}</div>
-                    {/* Always render this line (stable height) — no conditional mount/unmount */}
-                    <div style={{fontSize:'8px',color:'#555',marginTop:'1px',minHeight:'11px'}}>
-                      {srsEntry?`${srsEntry.reps} reps · next in ${srsEntry.interval}d`:'\u00a0'}
-                    </div>
-                    <div style={{marginTop:'5px'}}><PlayButtons v={chord.voicings[0]} size="sm"/></div>
                   </div>
                   <button
                     onClick={()=>!done&&mark(chord.id)}
@@ -1615,7 +1668,7 @@ export default function App(){
         </div>
         <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'7px',flexWrap:'wrap',justifyContent:'flex-end'}}>
           <button onClick={()=>setShowData(p=>!p)} style={{background:'transparent',border:'1px solid #2a2840',color:'#888',padding:'5px 9px',borderRadius:'7px',cursor:'pointer',fontSize:'10px',minHeight:'36px',whiteSpace:'nowrap',touchAction:'manipulation'}}>⬆⬇ Data</button>
-          <button onClick={()=>setShowDeg(p=>!p)} style={{padding:'9px 16px',borderRadius:'9px',cursor:'pointer',fontSize:'13px',fontWeight:800,border:`2px solid ${showDeg?'#ffd93d':'#555'}`,background:showDeg?'#ffd93d':'transparent',color:showDeg?'#111':'#bbb',transition:'background .2s,color .2s,border-color .2s,box-shadow .2s',minHeight:'44px',whiteSpace:'nowrap',boxShadow:showDeg?'0 0 14px #ffd93d55':'none',touchAction:'manipulation'}}>
+          <button onClick={()=>setShowDeg(p=>!p)} style={{padding:'7px 12px',borderRadius:'9px',cursor:'pointer',fontSize:'11px',fontWeight:700,border:`2px solid ${showDeg?'#ffd93d':'#555'}`,background:showDeg?'#ffd93d':'transparent',color:showDeg?'#111':'#bbb',transition:'background .2s,color .2s,border-color .2s,box-shadow .2s',minHeight:'36px',whiteSpace:'nowrap',boxShadow:showDeg?'0 0 12px #ffd93d55':'none',touchAction:'manipulation'}}>
             {showDeg?'✦ Degrees ON':'Scale Degrees'}
           </button>
         </div>
@@ -1635,8 +1688,8 @@ export default function App(){
       </div>
       {/* Safe-area bottom padding for iPhone home indicator */}
       <div style={{paddingBottom:'max(32px,env(safe-area-inset-bottom))'}}>
-        {tab==='daily'&&<ChordsOfDay srsData={srs} showDeg={showDeg} onMarkReviewed={onMarkReviewed}/>}
-        {tab==='library'&&<Library showDeg={showDeg}/>}
+        {tab==='daily'&&<ChordsOfDay srsData={srs} showDeg={showDeg} setShowDeg={setShowDeg} onMarkReviewed={onMarkReviewed}/>}
+        {tab==='library'&&<Library showDeg={showDeg} setShowDeg={setShowDeg}/>}
         {tab==='progs'&&<ProgressionsTab showDeg={showDeg}/>}
         {tab==='quiz'&&<QuizTab showDeg={showDeg} onChordQuizDone={onChordQuizDone} onDegDone={onDegDone}/>}
         {tab==='weak'&&<WeakTab history={hist} degHist={degHist} srs={srs} showDeg={showDeg} onComplete={onChordQuizDone}/>}
