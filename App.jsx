@@ -273,6 +273,23 @@ const BROAD_CATS=[
   {id:'Classical',label:'Classical',emoji:'🎼',color:'#74b9ff'},
 ];
 
+// ── PERSISTENT STORAGE ───────────────────────────────────────────────────
+// localStorage persists across sessions in standalone PWA (home screen launch).
+// window.storage is Claude's artifact sandbox API — works inside claude.ai but
+// starts fresh when Safari launches the page as a standalone PWA.
+// Strategy: write to BOTH, read localStorage first.
+const store={
+  async get(key){
+    try{const v=localStorage.getItem(key);if(v!==null)return{value:v};}catch(e){}
+    try{if(typeof window.storage!=='undefined'){const r=await window.storage.get(key);if(r)return r;}}catch(e){}
+    return null;
+  },
+  async set(key,value){
+    try{localStorage.setItem(key,value);}catch(e){}
+    try{if(typeof window.storage!=='undefined')await store.set(key,value);}catch(e){}
+  },
+};
+
 const shuffle=a=>{const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;};
 const todayStr=()=>new Date().toISOString().split('T')[0];
 const addDays=(d,n)=>{const dt=new Date(d);dt.setDate(dt.getDate()+n);return dt.toISOString().split('T')[0];};
@@ -1489,10 +1506,102 @@ const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkRe
 // we already snapshotted it at mount. onMarkReviewed is stable (ref pattern in App).
 },(prev,next)=>prev.showDeg===next.showDeg);
 
+// ── INSTALL BANNER ────────────────────────────────────────────────────────
+// Shows a native-feeling bottom sheet prompting the user to add to home screen.
+// Hidden when: already running as standalone PWA, or user has dismissed it.
+function InstallBanner(){
+  const[visible,setVisible]=useState(false);
+  const[deferredPrompt,setDeferredPrompt]=useState(null); // Android Chrome
+
+  useEffect(()=>{
+    // Already installed as standalone — never show
+    const isStandalone=window.matchMedia('(display-mode: standalone)').matches||
+      window.navigator.standalone===true;
+    if(isStandalone)return;
+
+    // Already dismissed this session or permanently
+    try{if(localStorage.getItem('ct_install_dismissed'))return;}catch(e){}
+
+    const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isAndroidChrome=/android/i.test(navigator.userAgent)&&/chrome/i.test(navigator.userAgent);
+
+    if(isIOS){
+      // iOS Safari: show after a short delay
+      const t=setTimeout(()=>setVisible(true),2500);
+      return()=>clearTimeout(t);
+    }
+
+    if(isAndroidChrome){
+      // Android Chrome: capture the beforeinstallprompt event
+      const handler=e=>{e.preventDefault();setDeferredPrompt(e);setVisible(true);};
+      window.addEventListener('beforeinstallprompt',handler);
+      return()=>window.removeEventListener('beforeinstallprompt',handler);
+    }
+  },[]);
+
+  const dismiss=()=>{
+    setVisible(false);
+    try{localStorage.setItem('ct_install_dismissed','1');}catch(e){}
+  };
+
+  const installAndroid=async()=>{
+    if(!deferredPrompt)return;
+    deferredPrompt.prompt();
+    const{outcome}=await deferredPrompt.userChoice;
+    if(outcome==='accepted')dismiss();
+    setDeferredPrompt(null);
+  };
+
+  if(!visible)return null;
+
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+
+  return(
+    <div style={{
+      position:'fixed',bottom:0,left:0,right:0,zIndex:9999,
+      padding:'14px 16px',paddingBottom:'max(14px,env(safe-area-inset-bottom))',
+      background:'#1a1928',borderTop:'1px solid #2a2840',
+      boxShadow:'0 -8px 32px #00000066',
+      display:'flex',flexDirection:'column',gap:'10px',
+      animation:'slideUp .3s ease',
+    }}>
+      <style>{`@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}`}</style>
+      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:'12px'}}>
+        <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+          <div style={{fontSize:'28px',lineHeight:1,flexShrink:0}}>🎸</div>
+          <div>
+            <div style={{fontSize:'13px',fontWeight:800,color:'#fff',marginBottom:'2px'}}>Add ChordTrainer to Home Screen</div>
+            <div style={{fontSize:'11px',color:'#888',lineHeight:'1.4'}}>
+              {isIOS
+                ? <>Tap <span style={{color:'#ffd93d',fontWeight:700}}>Share</span> <span style={{fontSize:'13px'}}>⎙</span> then <span style={{color:'#ffd93d',fontWeight:700}}>Add to Home Screen</span> for the best experience</>
+                : 'Install for offline access and a full-screen experience'}
+            </div>
+          </div>
+        </div>
+        <button onClick={dismiss} style={{background:'transparent',border:'none',color:'#555',fontSize:'20px',cursor:'pointer',padding:'0',lineHeight:1,flexShrink:0,touchAction:'manipulation'}}>×</button>
+      </div>
+      {!isIOS&&(
+        <button onClick={installAndroid} style={{background:'#ffd93d',color:'#111',border:'none',padding:'10px',borderRadius:'10px',fontSize:'13px',fontWeight:800,cursor:'pointer',touchAction:'manipulation'}}>
+          Install App
+        </button>
+      )}
+      {isIOS&&(
+        <div style={{display:'flex',gap:'8px',alignItems:'center',background:'#0f0e17',borderRadius:'9px',padding:'9px 12px',border:'1px solid #2a2840'}}>
+          <span style={{fontSize:'11px',color:'#aaa',flex:1,lineHeight:'1.5'}}>
+            <span style={{color:'#fff',fontWeight:700}}>1.</span> Tap <span style={{color:'#ffd93d',fontWeight:700}}>Share ⎙</span> at the bottom of your browser
+            {'  ·  '}<span style={{color:'#fff',fontWeight:700}}>2.</span> Scroll down and tap <span style={{color:'#ffd93d',fontWeight:700}}>Add to Home Screen</span>
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function HelpTab(){
   const[openTier,setOpenTier]=useState(null);
   const toggleTier=id=>setOpenTier(cur=>cur===id?null:id);
   const sections=[
+    {icon:'🧠',title:'Spaced Repetition',color:'#00b894',desc:"ChordTrainer uses the SM-2 algorithm (same as Anki) to schedule your practice. Each chord has an ease factor — answer correctly and the review interval grows; answer wrong and it resets to tomorrow. The higher the ease factor, the better you know the chord."},
     {icon:'🌅',title:'Today',color:'#74b9ff',desc:"Your daily practice hub. Opens with the Progression of the Day, followed by your SRS review queue. Tap any chord diagram to open its full detail view. Mark each chord 'Got it' to record your review and schedule the next one."},
     {icon:'📚',title:'Library',color:'#ffd93d',desc:'Browse all 120 chord voicings. Tap any card to open the full detail — diagram, transpose tool, degree guide, and audio. Use the 🎛 Filter Chords panel to narrow down by type and quality.',sub:[
       {label:'🎯 Family Filter',text:'Pick one of 7 mutually exclusive sonic families — Major, Dominant, Minor, Half-dim (ø), Diminished, Augmented, or Suspended. Dominant is correctly separated from Major (it has a ♭7). Half-dim has its own family rather than being lumped with minor.'},
@@ -1500,8 +1609,7 @@ function HelpTab(){
     ]},
     {icon:'🎯',title:'Quiz',color:'#4ecdc4',desc:'Two modes:',sub:[{label:'Chord Quiz',text:'Name→Shape or Shape→Name. Filter by category.'},{label:'Scale Degrees',text:'Tap the dot on the diagram matching the asked degree. Wrong answers reveal all degrees before you move on.'}]},
     {icon:'💪',title:'Weak',color:'#ff6b6b',desc:'Auto-tracks problem areas:',sub:[{label:'Weak Chords',text:'Chords answered incorrectly or with a degraded SRS ease factor.'},{label:'Weak Degrees',text:"Specific degree+chord combos you've struggled to identify."}]},
-    {icon:'🧠',title:'Spaced Repetition',color:'#00b894',desc:"Uses the SM-2 algorithm (same as Anki). Correct answers grow the review interval. Wrong resets it. The ease factor tracks fluency — higher means you know it cold."},
-    {icon:'💾',title:'Export / Import',color:'#fd79a8',desc:"Progress is saved locally. Use ⬆⬇ Data in the header to export JSON as a backup or import on another device."},
+    {icon:'💾',title:'Export / Import',color:'#fd79a8',desc:"Your progress is saved automatically and persists across sessions. Use ⬆⬇ Data in the header to export a JSON backup or import on another device."},
   ];
   const tiers=[
     {id:'guide',tier:'Guide Tones',stars:'★★★',color:'#ffd93d',short:'3, b3, 7, b7 — define the chord. Target these.',desc:'The 3rd and 7th define chord quality and create smooth voice leading. Bass covers the root — soloists target guide tones.',degrees:[{d:'3',note:'Defines major quality'},{d:'b3',note:'Defines minor quality'},{d:'7',note:'Lift and colour'},{d:'b7',note:'Tension & resolution'}]},
@@ -1621,9 +1729,9 @@ export default function App(){
   useEffect(()=>{
     (async()=>{
       try{
-        const s=await window.storage.get('ct_srs');
-        const h=await window.storage.get('ct_hist');
-        const d=await window.storage.get('ct_degh');
+        const s=await store.get('ct_srs');
+        const h=await store.get('ct_hist');
+        const d=await store.get('ct_degh');
         if(s)setSrs(JSON.parse(s.value));
         if(h)setHist(JSON.parse(h.value));
         if(d)setDegHist(JSON.parse(d.value));
@@ -1632,9 +1740,9 @@ export default function App(){
     })();
   },[]);
 
-  const saveSrs=async d=>{setSrs(d);try{await window.storage.set('ct_srs',JSON.stringify(d));}catch(e){}};
-  const saveHist=async d=>{setHist(d);try{await window.storage.set('ct_hist',JSON.stringify(d));}catch(e){}};
-  const saveDegHist=async d=>{setDegHist(d);try{await window.storage.set('ct_degh',JSON.stringify(d));}catch(e){}};
+  const saveSrs=async d=>{setSrs(d);try{await store.set('ct_srs',JSON.stringify(d));}catch(e){}};
+  const saveHist=async d=>{setHist(d);try{await store.set('ct_hist',JSON.stringify(d));}catch(e){}};
+  const saveDegHist=async d=>{setDegHist(d);try{await store.set('ct_degh',JSON.stringify(d));}catch(e){}};
 
   const onChordQuizDone=useCallback(async results=>{
     const ns={...srsRef.current},nh=[...histRef.current],td=todayStr();
@@ -1711,7 +1819,7 @@ export default function App(){
       <div style={{display:'flex',borderBottom:'1px solid #1a1928',overflowX:'auto',WebkitOverflowScrolling:'touch',scrollbarWidth:'none'}}>
         {TABS.map(t=>(<button key={t.id} onClick={()=>setTab(t.id)} style={{flex:'0 0 auto',padding:'10px 10px',background:'transparent',border:'none',cursor:'pointer',fontSize:'10px',fontWeight:600,color:tab===t.id?'#ffd93d':'#888',borderBottom:tab===t.id?'2px solid #ffd93d':'2px solid transparent',whiteSpace:'nowrap',minHeight:'44px',touchAction:'manipulation'}}>{t.icon} {t.label}</button>))}
       </div>
-      {/* Safe-area bottom padding for iPhone home indicator */}
+      {/* Safe-area bottom padding + extra room for install banner */}
       <div style={{paddingBottom:'max(32px,env(safe-area-inset-bottom))'}}>
         {tab==='daily'&&<ChordsOfDay srsData={srs} showDeg={showDeg} setShowDeg={setShowDeg} onMarkReviewed={onMarkReviewed}/>}
         {tab==='library'&&<Library showDeg={showDeg} setShowDeg={setShowDeg}/>}
@@ -1720,6 +1828,7 @@ export default function App(){
         {tab==='weak'&&<WeakTab history={hist} degHist={degHist} srs={srs} showDeg={showDeg} onComplete={onChordQuizDone}/>}
         {tab==='help'&&<HelpTab/>}
       </div>
+      <InstallBanner/>
     </div>
   );
 }
