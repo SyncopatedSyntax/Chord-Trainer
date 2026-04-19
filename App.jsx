@@ -315,12 +315,29 @@ function getWeakDegrees(degHist){
     .map(r=>({...r,chord:CHORDS.find(c=>c.id===r.id)})).filter(r=>r.chord)
     .sort((a,b)=>a.ok/a.n-b.ok/b.n);
 }
+// Seeded pseudo-random number generator (mulberry32) — deterministic for a given seed
+function seededRng(seed){
+  return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
+}
+// Simple string → number hash for seeding
+function strHash(s){let h=0;for(let i=0;i<s.length;i++){h=Math.imul(31,h)+s.charCodeAt(i)|0;}return h;}
+
+function seededShuffle(arr,seed){
+  const a=[...arr],rng=seededRng(seed);
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
 function getDailyChords(srsData){
   const td=todayStr();
+  const seed=strHash(td); // same seed all day → same order on every reload
   const due=CHORDS.filter(c=>srsData[c.id]?.nextDue<=td);
   const fresh=CHORDS.filter(c=>!srsData[c.id]);
   const seen=new Set();const result=[];
-  for(const c of [...shuffle(due),...shuffle(fresh)]){if(!seen.has(c.id)){seen.add(c.id);result.push(c);}if(result.length>=5)break;}
+  for(const c of [...seededShuffle(due,seed),...seededShuffle(fresh,seed+1)]){
+    if(!seen.has(c.id)){seen.add(c.id);result.push(c);}
+    if(result.length>=5)break;
+  }
   return result;
 }
 function getCharDegs(chord){
@@ -1511,28 +1528,28 @@ const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkRe
 // Hidden when: already running as standalone PWA, or user has dismissed it.
 function InstallBanner(){
   const[visible,setVisible]=useState(false);
-  const[deferredPrompt,setDeferredPrompt]=useState(null); // Android Chrome
+  const[deferredPrompt,setDeferredPrompt]=useState(null);
 
   useEffect(()=>{
-    // Already installed as standalone — never show
+    // Never show if already running as standalone PWA
     const isStandalone=window.matchMedia('(display-mode: standalone)').matches||
       window.navigator.standalone===true;
     if(isStandalone)return;
 
-    // Already dismissed this session or permanently
-    try{if(localStorage.getItem('ct_install_dismissed'))return;}catch(e){}
+    // Show every 10 dismissals (count stored in localStorage)
+    try{
+      const n=parseInt(localStorage.getItem('ct_install_count')||'0',10);
+      if(n>0&&n%10!==0)return; // not at a multiple of 10 yet — skip
+    }catch(e){}
 
     const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
     const isAndroidChrome=/android/i.test(navigator.userAgent)&&/chrome/i.test(navigator.userAgent);
 
     if(isIOS){
-      // iOS Safari: show after a short delay
       const t=setTimeout(()=>setVisible(true),2500);
       return()=>clearTimeout(t);
     }
-
     if(isAndroidChrome){
-      // Android Chrome: capture the beforeinstallprompt event
       const handler=e=>{e.preventDefault();setDeferredPrompt(e);setVisible(true);};
       window.addEventListener('beforeinstallprompt',handler);
       return()=>window.removeEventListener('beforeinstallprompt',handler);
@@ -1541,57 +1558,53 @@ function InstallBanner(){
 
   const dismiss=()=>{
     setVisible(false);
-    try{localStorage.setItem('ct_install_dismissed','1');}catch(e){}
+    try{
+      const n=parseInt(localStorage.getItem('ct_install_count')||'0',10);
+      localStorage.setItem('ct_install_count',String(n+1));
+    }catch(e){}
   };
 
   const installAndroid=async()=>{
     if(!deferredPrompt)return;
     deferredPrompt.prompt();
     const{outcome}=await deferredPrompt.userChoice;
-    if(outcome==='accepted')dismiss();
     setDeferredPrompt(null);
+    dismiss();
   };
 
   if(!visible)return null;
-
   const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
 
   return(
     <div style={{
       position:'fixed',bottom:0,left:0,right:0,zIndex:9999,
-      padding:'14px 16px',paddingBottom:'max(14px,env(safe-area-inset-bottom))',
+      padding:'12px 16px',paddingBottom:'max(12px,env(safe-area-inset-bottom))',
       background:'#1a1928',borderTop:'1px solid #2a2840',
       boxShadow:'0 -8px 32px #00000066',
       display:'flex',flexDirection:'column',gap:'10px',
       animation:'slideUp .3s ease',
     }}>
       <style>{`@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}`}</style>
-      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:'12px'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px'}}>
         <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-          <div style={{fontSize:'28px',lineHeight:1,flexShrink:0}}>🎸</div>
+          <div style={{fontSize:'26px',lineHeight:1,flexShrink:0}}>🎸</div>
           <div>
-            <div style={{fontSize:'13px',fontWeight:800,color:'#fff',marginBottom:'2px'}}>Add ChordTrainer to Home Screen</div>
-            <div style={{fontSize:'11px',color:'#888',lineHeight:'1.4'}}>
+            <div style={{fontSize:'13px',fontWeight:800,color:'#fff',marginBottom:'1px'}}>
+              {isIOS?'Get the full experience — add to Home Screen':'Practice anytime — install ChordTrainer'}
+            </div>
+            <div style={{fontSize:'11px',color:'#888'}}>
               {isIOS
-                ? <>Tap <span style={{color:'#ffd93d',fontWeight:700}}>Share</span> <span style={{fontSize:'13px'}}>⎙</span> then <span style={{color:'#ffd93d',fontWeight:700}}>Add to Home Screen</span> for the best experience</>
-                : 'Install for offline access and a full-screen experience'}
+                ?<>Tap <span style={{color:'#ffd93d',fontWeight:700}}>Share ⎙</span> → <span style={{color:'#ffd93d',fontWeight:700}}>Add to Home Screen</span></>
+                :'Full-screen, works offline, opens instantly'}
             </div>
           </div>
         </div>
-        <button onClick={dismiss} style={{background:'transparent',border:'none',color:'#555',fontSize:'20px',cursor:'pointer',padding:'0',lineHeight:1,flexShrink:0,touchAction:'manipulation'}}>×</button>
+        <button onClick={dismiss} style={{background:'transparent',border:'none',color:'#444',fontSize:'22px',cursor:'pointer',padding:'0 2px',lineHeight:1,flexShrink:0,touchAction:'manipulation'}}>×</button>
       </div>
       {!isIOS&&(
-        <button onClick={installAndroid} style={{background:'#ffd93d',color:'#111',border:'none',padding:'10px',borderRadius:'10px',fontSize:'13px',fontWeight:800,cursor:'pointer',touchAction:'manipulation'}}>
-          Install App
+        <button onClick={installAndroid} style={{background:'#ffd93d',color:'#111',border:'none',padding:'10px',borderRadius:'10px',fontSize:'13px',fontWeight:800,cursor:'pointer',touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
+          Install
         </button>
-      )}
-      {isIOS&&(
-        <div style={{display:'flex',gap:'8px',alignItems:'center',background:'#0f0e17',borderRadius:'9px',padding:'9px 12px',border:'1px solid #2a2840'}}>
-          <span style={{fontSize:'11px',color:'#aaa',flex:1,lineHeight:'1.5'}}>
-            <span style={{color:'#fff',fontWeight:700}}>1.</span> Tap <span style={{color:'#ffd93d',fontWeight:700}}>Share ⎙</span> at the bottom of your browser
-            {'  ·  '}<span style={{color:'#fff',fontWeight:700}}>2.</span> Scroll down and tap <span style={{color:'#ffd93d',fontWeight:700}}>Add to Home Screen</span>
-          </span>
-        </div>
       )}
     </div>
   );
