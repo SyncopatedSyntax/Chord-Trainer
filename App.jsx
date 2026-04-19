@@ -373,7 +373,22 @@ function PlayButtons({v,size,stack}){
   const play=mode=>{setActive(mode);playVoicing(v,mode);setTimeout(()=>setActive(null),mode==='arp'?nc*110+800:600);};
   const sm=size==='sm';
   const btn=mode=>({background:active===mode?'#ffd93d15':'transparent',border:`1px solid ${active===mode?'#ffd93d':'#2a2840'}`,color:active===mode?'#ffd93d':'#888',borderRadius:'7px',padding:sm?'4px 9px':'7px 15px',fontSize:sm?'11px':'12px',cursor:'pointer',fontWeight:600,transition:'all .15s',minHeight:sm?'30px':'38px',width:stack?'100%':'auto'});
-  return(<div style={{display:'flex',flexDirection:stack?'column':'row',gap:'5px',alignItems:'stretch'}}><button onClick={()=>play('arp')} style={btn('arp')}>♩ Arp</button><button onClick={()=>play('strum')} style={btn('strum')}>♬ Strum</button></div>);
+  // stopPropagation on both onClick AND onTouchStart:
+  // Safari synthesises a click from touchend and bubbles it up through the DOM,
+  // reaching any parent tappable div (e.g. the chord detail opener). Firefox Mobile
+  // doesn't exhibit this — it consumes the touch at the button level. Blocking both
+  // events ensures the play action never opens the chord detail on any browser.
+  const stop=e=>e.stopPropagation();
+  return(
+    <div
+      style={{display:'flex',flexDirection:stack?'column':'row',gap:'5px',alignItems:'stretch'}}
+      onClick={stop}
+      onTouchStart={stop}
+    >
+      <button onClick={e=>{stop(e);play('arp');}} style={btn('arp')}>♩ Arp</button>
+      <button onClick={e=>{stop(e);play('strum');}} style={btn('strum')}>♬ Strum</button>
+    </div>
+  );
 }
 
 function ChordDiagram({v,showDeg,size}){
