@@ -1493,9 +1493,12 @@ function HelpTab(){
   const[openTier,setOpenTier]=useState(null);
   const toggleTier=id=>setOpenTier(cur=>cur===id?null:id);
   const sections=[
-    {icon:'🌅',title:'Today',color:'#74b9ff',desc:"Your daily practice hub. Shows the Progression of the Day first, then your SRS review queue. Mark each chord 'Got it' to update its schedule."},
-    {icon:'📚',title:'Library',color:'#ffd93d',desc:'Browse all chord voicings. Use the Filter panel to find chords by quality (Major, Min 7, Half-dim etc.). Tap any card for the full diagram, transpose tool, and audio.'},
-    {icon:'🎯',title:'Quiz',color:'#4ecdc4',desc:'Two modes:',sub:[{label:'Chord Quiz',text:'Name→Shape or Shape→Name. Filter by category.'},{label:'Scale Degrees',text:'Tap the dot matching the asked degree. Wrong answers reveal all degrees before you move on.'}]},
+    {icon:'🌅',title:'Today',color:'#74b9ff',desc:"Your daily practice hub. Opens with the Progression of the Day, followed by your SRS review queue. Tap any chord diagram to open its full detail view. Mark each chord 'Got it' to record your review and schedule the next one."},
+    {icon:'📚',title:'Library',color:'#ffd93d',desc:'Browse all 120 chord voicings. Tap any card to open the full detail — diagram, transpose tool, degree guide, and audio. Use the 🎛 Filter Chords panel to narrow down by type and quality.',sub:[
+      {label:'🎯 Family Filter',text:'Pick one of 7 mutually exclusive sonic families — Major, Dominant, Minor, Half-dim (ø), Diminished, Augmented, or Suspended. Dominant is correctly separated from Major (it has a ♭7). Half-dim has its own family rather than being lumped with minor.'},
+      {label:'🔧 Builder Filter',text:'Build the chord you want in 3 steps: choose a Triad Base (maj, m, sus2, sus4, aug, dim) → optionally add a 7th interval (♭7, Δ7, or °7) → optionally add Color Tones (9, ♭9, ♯9, 11, ♯11, 13, ♭13, 6). A live label shows the resulting chord type as you build, e.g. Minor + ♭7 = "Minor 7th", or Dim + ♭7 = "Half-dim ø".'},
+    ]},
+    {icon:'🎯',title:'Quiz',color:'#4ecdc4',desc:'Two modes:',sub:[{label:'Chord Quiz',text:'Name→Shape or Shape→Name. Filter by category.'},{label:'Scale Degrees',text:'Tap the dot on the diagram matching the asked degree. Wrong answers reveal all degrees before you move on.'}]},
     {icon:'💪',title:'Weak',color:'#ff6b6b',desc:'Auto-tracks problem areas:',sub:[{label:'Weak Chords',text:'Chords answered incorrectly or with a degraded SRS ease factor.'},{label:'Weak Degrees',text:"Specific degree+chord combos you've struggled to identify."}]},
     {icon:'🧠',title:'Spaced Repetition',color:'#00b894',desc:"Uses the SM-2 algorithm (same as Anki). Correct answers grow the review interval. Wrong resets it. The ease factor tracks fluency — higher means you know it cold."},
     {icon:'💾',title:'Export / Import',color:'#fd79a8',desc:"Progress is saved locally. Use ⬆⬇ Data in the header to export JSON as a backup or import on another device."},
@@ -1530,7 +1533,14 @@ function HelpTab(){
           </div>
         ))}
       </div>
-      <div style={{fontSize:'15px',fontWeight:900,color:'#fff',marginBottom:'4px'}}>Scale Degree Colors</div>
+      <div style={{fontSize:'15px',fontWeight:900,color:'#fff',marginBottom:'4px'}}>Chord Diagrams & Degree Colours</div>
+      <div style={{fontSize:'12px',color:'#bbb',lineHeight:'1.6',marginBottom:'10px'}}>
+        <span style={{color:'#ffd93d',fontWeight:700}}>Tap any chord diagram</span> — on the Today tab, in the Progression of the Day, or in the Library — to open the full detail view. You'll see the voicing at a larger size, an audio player, a transpose tool for movable shapes, and the degree guide below.{' '}
+        <span style={{color:'#ffd93d',fontWeight:700}}>Scale Degrees</span> turn on automatically when a detail opens, and restore to their previous state when you go back.
+      </div>
+      <div style={{padding:'9px 12px',background:'#13121f',borderRadius:'9px',border:'1px solid #2a2840',marginBottom:'12px'}}>
+        <div style={{fontSize:'11px',color:'#bbb',lineHeight:'1.6'}}>Enable <span style={{color:'#ffd93d',fontWeight:700}}>Scale Degrees</span> in the header to colour-code every dot on every diagram throughout the app. The colours are grouped by harmonic function — tap any tier below to learn what each colour means and when to use those notes.</div>
+      </div>
       <div style={{display:'flex',flexDirection:'column',gap:'5px',marginBottom:'16px'}}>
         {tiers.map(t=>{
           const open=openTier===t.id;
