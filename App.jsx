@@ -1728,6 +1728,60 @@ export default function App(){
       body{overscroll-behavior-y:none;-webkit-overflow-scrolling:touch;}
       input,textarea,select{font-size:16px!important;}
     `;
+    // ── Generate app icon via canvas and inject as apple-touch-icon + manifest ──
+    function makeIcon(size){
+      const c=document.createElement('canvas');c.width=c.height=size;
+      const ctx=c.getContext('2d');
+      const r=size*0.22; // corner radius
+      // Background
+      ctx.beginPath();ctx.moveTo(r,0);ctx.lineTo(size-r,0);ctx.quadraticCurveTo(size,0,size,r);
+      ctx.lineTo(size,size-r);ctx.quadraticCurveTo(size,size,size-r,size);
+      ctx.lineTo(r,size);ctx.quadraticCurveTo(0,size,0,size-r);
+      ctx.lineTo(0,r);ctx.quadraticCurveTo(0,0,r,0);ctx.closePath();
+      ctx.fillStyle='#0f0e17';ctx.fill();
+      // Gold outer ring
+      ctx.strokeStyle='#ffd93d';ctx.lineWidth=size*0.03;ctx.stroke();
+      // Guitar pick shape (rounded triangle pointing down, centered)
+      const cx=size/2,cy=size/2*0.96;
+      const pw=size*0.54,ph=size*0.62,pr=size*0.12;
+      ctx.beginPath();
+      ctx.moveTo(cx,cy+ph/2);                        // bottom tip
+      ctx.quadraticCurveTo(cx-pr,cy+ph/2-pr, cx-pw/2,cy);// left side
+      ctx.quadraticCurveTo(cx-pw/2-pr*0.3,cy-ph/2+pr, cx-pw/2+pr,cy-ph/2); // top-left
+      ctx.quadraticCurveTo(cx,cy-ph/2-pr*0.2, cx+pw/2-pr,cy-ph/2); // top-right
+      ctx.quadraticCurveTo(cx+pw/2+pr*0.3,cy-ph/2+pr, cx+pw/2,cy);// right side
+      ctx.quadraticCurveTo(cx+pr,cy+ph/2-pr, cx,cy+ph/2);
+      ctx.closePath();
+      // Pick gradient: bright gold to warm amber
+      const g=ctx.createLinearGradient(cx-pw/2,cy-ph/2,cx+pw/2,cy+ph/2);
+      g.addColorStop(0,'#ffd93d');g.addColorStop(1,'#e6a800');
+      ctx.fillStyle=g;ctx.fill();
+      // Inner shadow line on pick
+      ctx.strokeStyle='rgba(0,0,0,0.18)';ctx.lineWidth=size*0.015;ctx.stroke();
+      // "CT" text on pick
+      const fs=size*0.2;
+      ctx.font=`900 ${fs}px 'Segoe UI',system-ui,sans-serif`;
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillStyle='#0f0e17';
+      ctx.fillText('CT',cx,cy-ph*0.05);
+      // Small dot below text (like a guitar string)
+      ctx.beginPath();ctx.arc(cx,cy+ph*0.22,size*0.025,0,Math.PI*2);
+      ctx.fillStyle='#0f0e17';ctx.fill();
+      return c.toDataURL('image/png');
+    }
+
+    const iconUrl=makeIcon(512);
+    const iconUrl180=makeIcon(180);
+
+    // apple-touch-icon (iOS home screen)
+    const setLink=(rel,sizes,href)=>{
+      let l=document.querySelector(`link[rel="${rel}"]${sizes?`[sizes="${sizes}"]`:''}`);
+      if(!l){l=document.createElement('link');l.rel=rel;if(sizes)l.sizes=sizes;document.head.appendChild(l);}
+      l.href=href;
+    };
+    setLink('apple-touch-icon','180x180',iconUrl180);
+    setLink('icon','512x512',iconUrl);
+
     document.head.appendChild(style);
     // Theme + viewport
     const setMeta=(name,content)=>{let m=document.querySelector(`meta[name="${name}"]`);if(!m){m=document.createElement('meta');m.name=name;document.head.appendChild(m);}m.content=content;};
@@ -1736,7 +1790,25 @@ export default function App(){
     setMeta('apple-mobile-web-app-capable','yes');
     setMeta('apple-mobile-web-app-status-bar-style','black-translucent');
     setMeta('apple-mobile-web-app-title','ChordTrainer');
-    return()=>{document.head.removeChild(style);};
+
+    // Web app manifest with generated icon
+    const manifest={
+      name:'ChordTrainer',short_name:'ChordTrainer',
+      description:'Guitar chord training with SRS, scale degrees, and progressions.',
+      start_url:'.',display:'standalone',orientation:'portrait',
+      background_color:'#0f0e17',theme_color:'#0f0e17',
+      icons:[
+        {src:iconUrl180,sizes:'180x180',type:'image/png'},
+        {src:iconUrl,sizes:'512x512',type:'image/png'},
+      ],
+    };
+    const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+    const murl=URL.createObjectURL(blob);
+    let mlink=document.querySelector('link[rel="manifest"]');
+    if(!mlink){mlink=document.createElement('link');mlink.rel='manifest';document.head.appendChild(mlink);}
+    mlink.href=murl;
+
+    return()=>{document.head.removeChild(style);URL.revokeObjectURL(murl);};
   },[]);
 
   useEffect(()=>{
