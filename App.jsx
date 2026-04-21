@@ -1525,7 +1525,7 @@ const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkRe
 
 // ── INSTALL BANNER ────────────────────────────────────────────────────────
 // Shows a native-feeling bottom sheet prompting the user to add to home screen.
-// Hidden when: already running as standalone PWA, or user has dismissed it.
+// Hidden when: already running as standalone PWA, or not on a multiple-of-5 launch.
 function InstallBanner(){
   const[visible,setVisible]=useState(false);
   const[deferredPrompt,setDeferredPrompt]=useState(null);
@@ -1536,11 +1536,14 @@ function InstallBanner(){
       window.navigator.standalone===true;
     if(isStandalone)return;
 
-    // Show every 10 dismissals (count stored in localStorage)
+    // Increment launch counter on every page load, show on every 5th launch (1, 5, 10, 15…)
+    let launches=1;
     try{
-      const n=parseInt(localStorage.getItem('ct_install_count')||'0',10);
-      if(n>0&&n%10!==0)return; // not at a multiple of 10 yet — skip
+      launches=parseInt(localStorage.getItem('ct_launches')||'0',10)+1;
+      localStorage.setItem('ct_launches',String(launches));
     }catch(e){}
+    // Show on launch 1 and every 5th launch after that
+    if(launches!==1&&launches%5!==0)return;
 
     const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
     const isAndroidChrome=/android/i.test(navigator.userAgent)&&/chrome/i.test(navigator.userAgent);
@@ -1556,13 +1559,8 @@ function InstallBanner(){
     }
   },[]);
 
-  const dismiss=()=>{
-    setVisible(false);
-    try{
-      const n=parseInt(localStorage.getItem('ct_install_count')||'0',10);
-      localStorage.setItem('ct_install_count',String(n+1));
-    }catch(e){}
-  };
+  // Dismiss hides the banner for this session only — launch counter keeps running
+  const dismiss=()=>setVisible(false);
 
   const installAndroid=async()=>{
     if(!deferredPrompt)return;
