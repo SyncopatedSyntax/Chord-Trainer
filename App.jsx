@@ -1730,41 +1730,91 @@ export default function App(){
     function makeIcon(size){
       const c=document.createElement('canvas');c.width=c.height=size;
       const ctx=c.getContext('2d');
-      const r=size*0.22; // corner radius
-      // Background
-      ctx.beginPath();ctx.moveTo(r,0);ctx.lineTo(size-r,0);ctx.quadraticCurveTo(size,0,size,r);
-      ctx.lineTo(size,size-r);ctx.quadraticCurveTo(size,size,size-r,size);
-      ctx.lineTo(r,size);ctx.quadraticCurveTo(0,size,0,size-r);
-      ctx.lineTo(0,r);ctx.quadraticCurveTo(0,0,r,0);ctx.closePath();
-      ctx.fillStyle='#0f0e17';ctx.fill();
-      // Gold outer ring
-      ctx.strokeStyle='#ffd93d';ctx.lineWidth=size*0.03;ctx.stroke();
-      // Guitar pick shape (rounded triangle pointing down, centered)
-      const cx=size/2,cy=size/2*0.96;
-      const pw=size*0.54,ph=size*0.62,pr=size*0.12;
-      ctx.beginPath();
-      ctx.moveTo(cx,cy+ph/2);                        // bottom tip
-      ctx.quadraticCurveTo(cx-pr,cy+ph/2-pr, cx-pw/2,cy);// left side
-      ctx.quadraticCurveTo(cx-pw/2-pr*0.3,cy-ph/2+pr, cx-pw/2+pr,cy-ph/2); // top-left
-      ctx.quadraticCurveTo(cx,cy-ph/2-pr*0.2, cx+pw/2-pr,cy-ph/2); // top-right
-      ctx.quadraticCurveTo(cx+pw/2+pr*0.3,cy-ph/2+pr, cx+pw/2,cy);// right side
-      ctx.quadraticCurveTo(cx+pr,cy+ph/2-pr, cx,cy+ph/2);
-      ctx.closePath();
-      // Pick gradient: bright gold to warm amber
-      const g=ctx.createLinearGradient(cx-pw/2,cy-ph/2,cx+pw/2,cy+ph/2);
-      g.addColorStop(0,'#ffd93d');g.addColorStop(1,'#e6a800');
-      ctx.fillStyle=g;ctx.fill();
-      // Inner shadow line on pick
-      ctx.strokeStyle='rgba(0,0,0,0.18)';ctx.lineWidth=size*0.015;ctx.stroke();
-      // "CT" text on pick
-      const fs=size*0.2;
-      ctx.font=`900 ${fs}px 'Segoe UI',system-ui,sans-serif`;
-      ctx.textAlign='center';ctx.textBaseline='middle';
+
+      // Full bleed background — no rounded corners; iOS/Android apply their own mask
       ctx.fillStyle='#0f0e17';
-      ctx.fillText('CT',cx,cy-ph*0.05);
-      // Small dot below text (like a guitar string)
-      ctx.beginPath();ctx.arc(cx,cy+ph*0.22,size*0.025,0,Math.PI*2);
-      ctx.fillStyle='#0f0e17';ctx.fill();
+      ctx.fillRect(0,0,size,size);
+
+      // ── Chord: E major open ──────────────────────────────────────────────
+      // str=[0,2,2,1,0,0]  deg=['R','5','R','3','5','R']
+      // Strings 0,4,5 open (circles above nut)
+      // String 3: fret 1 (3rd, gold)
+      // Strings 1,2: fret 2 (5th red, R red)
+
+      // Safe inner area — 20% padding keeps diagram clear of OS corner mask
+      const pad=size*0.20;
+      const openH=size*0.11; // height above nut for open-string indicators
+
+      const left=pad;
+      const right=size-pad;
+      const nutY=pad+openH;          // top of fret grid = nut line
+      const bottom=size-pad*0.85;    // bottom of grid
+
+      const gridW=right-left;
+      const gridH=bottom-nutY;
+      const nStrings=6;
+      const nFrets=4;
+      const ss=gridW/(nStrings-1);   // string spacing
+      const fs=gridH/nFrets;          // fret spacing
+
+      const sx=i=>left+i*ss;
+      const fy=f=>nutY+f*fs;
+
+      const lw=Math.max(2,size*0.006);   // fret/string line weight
+      const dotR=size*0.058;             // fretted dot radius
+      const openR=size*0.038;            // open circle radius
+      const nutW=Math.max(3,size*0.014); // nut thickness
+
+      // Fret lines (1–4)
+      ctx.strokeStyle='#2d2b45';
+      ctx.lineWidth=lw*0.9;
+      ctx.lineCap='butt';
+      for(let f=1;f<=nFrets;f++){
+        ctx.beginPath();ctx.moveTo(left,fy(f));ctx.lineTo(right,fy(f));ctx.stroke();
+      }
+
+      // String lines
+      ctx.strokeStyle='#3a3858';
+      ctx.lineWidth=lw*0.8;
+      for(let i=0;i<nStrings;i++){
+        ctx.beginPath();ctx.moveTo(sx(i),nutY);ctx.lineTo(sx(i),bottom);ctx.stroke();
+      }
+
+      // Nut (thick white line)
+      ctx.strokeStyle='#cccccc';
+      ctx.lineWidth=nutW;
+      ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(left,nutY);ctx.lineTo(right,nutY);ctx.stroke();
+
+      // Dot and indicator colors — root red, everything else gold
+      const ROOT='#ff4757';
+      const OTHER='#ffd93d';
+
+      const strings=[
+        {fret:0,  root:true},   // str0 low E — open R
+        {fret:2,  root:false},  // str1 A     — fret 2, 5th
+        {fret:2,  root:true},   // str2 D     — fret 2, R
+        {fret:1,  root:false},  // str3 G     — fret 1, 3rd
+        {fret:0,  root:false},  // str4 B     — open 5th
+        {fret:0,  root:true},   // str5 e     — open R
+      ];
+
+      strings.forEach(({fret,root},i)=>{
+        const col=root?ROOT:OTHER;
+        const x=sx(i);
+        if(fret===0){
+          // Open circle above nut
+          const y=nutY-openH*0.52;
+          ctx.beginPath();ctx.arc(x,y,openR,0,Math.PI*2);
+          ctx.strokeStyle=col;ctx.lineWidth=Math.max(1.5,lw*1.6);ctx.stroke();
+        } else {
+          // Filled dot centered in fret slot
+          const y=fy(fret-1)+fs*0.5;
+          ctx.beginPath();ctx.arc(x,y,dotR,0,Math.PI*2);
+          ctx.fillStyle=col;ctx.fill();
+        }
+      });
+
       return c.toDataURL('image/png');
     }
 
