@@ -14,6 +14,8 @@ const CATS={
   drop2:{label:'Drop 2',color:'#4ecdc4'},
   drop3:{label:'Drop 3',color:'#e8a838'},
   drop24:{label:'Drop 2 & 4',color:'#00b894'},
+  spread:{label:'Spread Voicings',color:'#fdcb6e'},
+  quartal:{label:'Quartal',color:'#b8f0e6'},
   ext:{label:'Extensions',color:'#fd79a8'},
   altered:{label:'Altered',color:'#e17055'},
 };
@@ -210,9 +212,137 @@ const CHORDS=[
   {id:'dom7s9s5',name:'Dom 7#9#5',sym:'7#9#5',cat:'altered',movable:true,voicings:[{label:'6543 R-#5-b7-#9 · ex G7#9#5@3fr',str:[3,6,3,3,-1,-1],deg:['R','#5','b7','#9',null,null],sf:3}]},
   // 7b9b13: E3=G(R), D3=F(b7): 53, G1=Ab(b9): 56, B4=Eb(b13): 63
   {id:'dom7b9b13',name:'Dom 7b9b13',sym:'7b9b13',cat:'altered',movable:true,voicings:[{label:'6-4-3-2 R-b7-b9-b13 · ex G7b9b13@1fr',str:[3,-1,3,1,4,-1],deg:['R',null,'b7','b9','b13',null],sf:1}]},
-];
 
-const PROGS=[
+  // ── SPREAD VOICINGS ────────────────────────────────────────────────────
+  // Open-voiced 7ths spanning more than an octave. Pianistic sound — common in jazz chord melody and solo guitar.
+  // All examples at G root (fret 3 on low E). OPEN_MIDI=[40,45,50,55,59,64]
+  // E fret 3=43=G(R), G fret 4=59=B(3), G fret 3=58=Bb(b3), B fret 7=66=F#(7), B fret 6=65=F(b7), e fret 7=71=B(3), e fret 6=70=Bb(b3)
+  {id:'spMaj7',    name:'Spread Maj7',    sym:'Δ',   cat:'spread',movable:true,voicings:[{label:'6-3-2-1 R-3-7-3 · ex Gmaj7@3fr',  str:[3,-1,-1,4,7,7],  deg:['R',null,null,'3','7','3'],    sf:3}]},
+  {id:'spDom7',    name:'Spread Dom7',    sym:'7',   cat:'spread',movable:true,voicings:[{label:'6-3-2-1 R-3-b7-3 · ex G7@3fr',    str:[3,-1,-1,4,6,7],  deg:['R',null,null,'3','b7','3'],  sf:3}]},
+  {id:'spMin7',    name:'Spread Min7',    sym:'m7',  cat:'spread',movable:true,voicings:[{label:'6-3-2-1 R-b3-b7-b3 · ex Gm7@3fr', str:[3,-1,-1,3,6,6],  deg:['R',null,null,'b3','b7','b3'],sf:3}]},
+  // Spread major triad: E3=G(R), D7=A(5): 57=A3=5th✓, e7=B(3): 71✓
+  {id:'spMaj',     name:'Spread Major',   sym:'maj', cat:'spread',movable:true,voicings:[{label:'6-4-1 R-5-3 · ex G@3fr',           str:[3,-1,7,-1,-1,7], deg:['R',null,'5',null,null,'3'],  sf:3}]},
+  // Spread 6/9 (classic open jazz colour): E3=G(R), D2=E(6): 52=E3=6th✓, G2=A(9): 57=A3=9th✓, e7=B(3): 71✓
+  {id:'sp69',      name:'Spread 6/9',     sym:'6/9', cat:'spread',movable:true,voicings:[{label:'6-4-3-1 R-6-9-3 · ex G6/9@2fr',   str:[3,-1,2,2,-1,7],  deg:['R',null,'6','9',null,'3'],   sf:2}]},
+  // Spread min(Δ7): E3=G(R), G3=Bb(b3): 58✓, B7=F#(7): 66✓
+  {id:'spMinMaj7', name:'Spread min(Δ7)', sym:'m(Δ)',cat:'spread',movable:true,voicings:[{label:'6-3-2 R-b3-7 · ex GmΔ7@3fr',       str:[3,-1,-1,3,7,-1], deg:['R',null,null,'b3','7',null],  sf:3}]},
+  // Spread m7b5: E3=G(R), G3=Bb(b3): 58✓, B6=F(b7): 65✓
+  {id:'spHalfDim', name:'Spread m7b5',    sym:'ø',   cat:'spread',movable:true,voicings:[{label:'6-3-2 R-b3-b7 · ex Gø@3fr',        str:[3,-1,-1,3,6,-1], deg:['R',null,null,'b3','b7',null], sf:3}]},
+  // Spread min6: E3=G(R), G3=Bb(b3): 58✓, B5=E(6): 64✓ (6th of Gm=E✓)
+  {id:'spMin6',    name:'Spread Min6',    sym:'m6',  cat:'spread',movable:true,voicings:[{label:'6-3-2 R-b3-6 · ex Gm6@3fr',        str:[3,-1,-1,3,5,-1], deg:['R',null,null,'b3','6',null],  sf:3}]},
+
+  // ── COWBOY / OPEN additions ─────────────────────────────────────────────
+  // G sus4 open: E3=G(R)✓, A3=C(4): 48✓, D0=D(5): 50✓, G0=G(R): 55✓, B1=C(4): 60✓, e3=G(R): 67✓
+  {id:'cGsus4',    name:'G Sus4',         sym:'Gsus4',cat:'cowboy',voicings:[{label:'Open',str:[3,3,0,0,1,3],deg:['R','4','5','R','4','R'],sf:1}]},
+  // C sus2 open: A3=C(R)✓, D0=D(2): 50✓, G0=G(5): 55✓, B3=D(2): 62✓, e3=G(5): 67✓
+  {id:'cCsus2',    name:'Csus2',          sym:'Csus2',cat:'cowboy',voicings:[{label:'Open',str:[-1,3,0,0,3,3],deg:[null,'R','2','5','2','5'],sf:1}]},
+  // D7sus4 open: D0=D(R)✓, G2=A(5): 57✓, B1=C(b7): 60✓, e3=G(4): 67✓
+  {id:'cD7sus4',   name:'D7sus4',         sym:'D7sus4',cat:'cowboy',voicings:[{label:'Open',str:[-1,-1,0,2,1,3],deg:[null,null,'R','5','b7','4'],sf:1}]},
+
+  // ── SUS barre ──────────────────────────────────────────────────────────
+  // Sus2 E-shape barre: E5=A(R)✓, A7=E(5): 52✓, D7=A(R): 57✓, G4=B(2): 59✓ (2nd of A=B✓), B5=E(5): 64✓, e5=A(R): 69✓
+  {id:'bSus2_E',   name:'Sus2 E-shape',   sym:'sus2',cat:'barre',movable:true,voicings:[{label:'6th-str root · ex Asus2@5fr',str:[5,7,7,4,5,5],deg:['R','5','R','2','5','R'],sf:4}]},
+  // Augmented A-shape barre (3-note): A3=C(R)✓, D2=E(3): 52✓, G1=Ab(#5): 56✓ (#5 of C=G#/Ab✓)
+  {id:'bAug',      name:'Aug A-shape',    sym:'+',   cat:'barre',movable:true,voicings:[{label:'5th-str root · ex C+@1fr',str:[-1,3,2,1,-1,-1],deg:[null,'R','3','#5',null,null],sf:1}]},
+
+  // ── SHELL additions ─────────────────────────────────────────────────────
+  // Maj7sus2 shell: E3=G(R)✓, D4=F#(7): 54✓, G2=A(2): 57✓ (2nd of G=A✓)
+  {id:'shMaj7sus2',name:'Maj7sus2 Shell', sym:'Δsus2',cat:'shell',movable:true,voicings:[{label:'6-4-3 R-7-2 · ex Gmaj7sus2@2fr',str:[3,-1,4,2,-1,-1],deg:['R',null,'7','2',null,null],sf:2}]},
+
+  // ── DROP 2 additions ───────────────────────────────────────────────────
+  // Maj6 Drop2 on 6543: E3=G(R)✓, A5=D(5): 50✓, D2=E(6): 52✓ (6th of G=E✓), G4=B(3): 59✓
+  {id:'d2maj6_6',  name:'Maj6 Drop2',     sym:'6',   cat:'drop2',movable:true,voicings:[{label:'6543 R-5-6-3 · ex G6@2fr', str:[3,5,2,4,-1,-1],deg:['R','5','6','3',null,null],sf:2}]},
+  // Min6 Drop2 on 6543: E5=A(R)✓, A7=E(5): 52✓, D4=F#(6): 54✓ (6th of Am=F#✓), G5=C(b3): 60✓
+  {id:'d2min6_6',  name:'Min6 Drop2',     sym:'m6',  cat:'drop2',movable:true,voicings:[{label:'6543 R-5-6-b3 · ex Am6@4fr',str:[5,7,4,5,-1,-1],deg:['R','5','6','b3',null,null],sf:4}]},
+  // Maj6 Drop2 on 4321: D5=G(R): 55✓, G4=B(3): 59✓, B5=E(6): 64✓ (6th of G=E✓), e7=B(3): 71✓
+  {id:'d2maj6_4',  name:'Maj6 Drop2',     sym:'6',   cat:'drop2',movable:true,voicings:[{label:'4321 R-3-6-3 · ex G6@5fr', str:[-1,-1,5,4,5,7],deg:[null,null,'R','3','6','3'],sf:4}]},
+
+  // ── EXTENSION additions ─────────────────────────────────────────────────
+  // 9sus4: A3=C(R)✓, D3=F(4): 53✓, G3=Bb(b7): 58✓, B3=D(9): 62✓
+  {id:'dom9sus4',  name:'Dom 9sus4',      sym:'9sus4',cat:'ext',movable:true,voicings:[{label:'5432 R-4-b7-9 · ex C9sus4@3fr', str:[-1,3,3,3,3,-1],deg:[null,'R','4','b7','9',null],sf:3}]},
+  // 13sus4: E3=G(R)✓, D3=F(b7): 53✓, G5=C(4): 60✓, B5=E(13): 64✓ (13th of G=E✓)
+  {id:'dom13sus4', name:'Dom 13sus4',     sym:'13sus4',cat:'ext',movable:true,voicings:[{label:'6-4-3-2 R-b7-4-13 · ex G13sus4@3fr',str:[3,-1,3,5,5,-1],deg:['R',null,'b7','4','13',null],sf:3}]},
+  // Maj7#5: E3=G(R)✓, A2=B(3): 47✓, D4=F#(7): 54✓, B4=Eb(#5): 63✓ (#5 of G=D#/Eb✓)
+  {id:'maj7s5',    name:'Maj7#5',         sym:'Δ#5', cat:'ext',movable:true,voicings:[{label:'6-5-4-2 R-3-7-#5 · ex Gmaj7#5@2fr',str:[3,2,4,-1,4,-1],deg:['R','3','7',null,'#5',null],sf:2}]},
+  // Maj9 on 5432: A3=C(R)✓, D2=E(3): 52✓, G4=B(7): 59✓, B3=D(9): 62✓
+  {id:'maj9_5',    name:'Maj9',           sym:'maj9',cat:'ext',movable:true,voicings:[{label:'5432 R-3-7-9 · ex Cmaj9@1fr', str:[-1,3,2,4,3,-1],deg:[null,'R','3','7','9',null],sf:1}]},
+  // Minor 13: A5=D(R)✓:50, D3=F(b3):53✓, G4=B(13):59✓ (13th/6th of Dm=B✓), B1=C(b7):60✓
+  {id:'min13',     name:'Minor 13',       sym:'m13', cat:'ext',movable:true,voicings:[{label:'5432 R-b3-13-b7 · ex Dm13@1fr', str:[-1,5,3,4,1,-1],deg:[null,'R','b3','13','b7',null],sf:1}]},
+  // Maj9#11 (Lydian): A3=C(R)✓, D2=E(3):52✓, G4=B(7):59✓, B3=D(9):62✓, e2=F#(#11):66✓
+  {id:'maj9s11',   name:'Maj9#11',        sym:'Δ9#11',cat:'ext',movable:true,voicings:[{label:'5-4-3-2-1 R-3-7-9-#11 · ex CΔ9#11',str:[-1,3,2,4,3,2],deg:[null,'R','3','7','9','#11'],sf:2}]},
+  // Dom9#11 (Lydian dominant): A3=C(R)✓, D2=E(3):52✓, G3=Bb(b7):58✓, B3=D(9):62✓, e2=F#(#11):66✓
+  {id:'dom9s11',   name:'Dom 9#11',       sym:'9#11',cat:'ext',movable:true,voicings:[{label:'5-4-3-2-1 R-3-b7-9-#11 · ex C9#11', str:[-1,3,2,3,3,2],deg:[null,'R','3','b7','9','#11'],sf:2}]},
+
+  // ── QUARTAL VOICINGS ─────────────────────────────────────────────────────
+  // Chords built from stacked 4ths — the harmonic language of McCoy Tyner, Herbie Hancock,
+  // Bill Frisell, Pat Metheny. Ambiguous tonality; context determines quality.
+
+  // 3-note quartal (6-5-4): R→+P4→+P4 — same fret on bottom 3 strings
+  // ex G: E3=G(R)✓, A3=C(4):48✓, D3=F(b7):53✓  stacked P4ths G→C→F
+  {id:'q3_654',    name:'Quartal Shell',   sym:'(4)',  cat:'quartal',movable:true,voicings:[{label:'6-5-4 R-4-b7 same fret · ex G@3fr',str:[3,3,3,-1,-1,-1],deg:['R','4','b7',null,null,null],sf:3}]},
+
+  // Quartal + major 3rd (6-5-4-3): adds 3rd above the quartal shell
+  // ex G: +G4=B(3):59✓ — R-4-b7-3 — adds tonal colour for major/dominant context
+  {id:'q4_6543',   name:'Quartal Major',   sym:'(4)M', cat:'quartal',movable:true,voicings:[{label:'6-5-4-3 R-4-b7-3 · ex G@3fr',    str:[3,3,3,4,-1,-1],deg:['R','4','b7','3',null,null],sf:3}]},
+
+  // Quartal minor 3rd (6-5-4-3): adds minor 3rd instead
+  // ex G: +G3=Bb(b3):58✓ — R-4-b7-b3
+  {id:'q4m_6543',  name:'Quartal Minor',   sym:'(4)m', cat:'quartal',movable:true,voicings:[{label:'6-5-4-3 R-4-b7-b3 · ex Gm@3fr',   str:[3,3,3,3,-1,-1],deg:['R','4','b7','b3',null,null],sf:3}]},
+
+  // So What chord (5-4-3-2): R-4-b7-b3 — stacked 4ths with m3 on top (the Miles Davis/McCoy sound)
+  // A5=D(R):50✓, D5=G(4):55✓, G5=C(b7):60✓, B6=F(b3):65✓
+  {id:'qSoWhat',   name:'So What (quartal)',sym:'SW',  cat:'quartal',movable:true,voicings:[{label:'5-4-3-2 R-4-b7-b3 · ex D@5fr',    str:[-1,5,5,5,6,-1],deg:[null,'R','4','b7','b3',null],sf:5}]},
+
+  // Quartal Dorian (6-4-3-2): R-b7-4-13 — adds the characteristic Dorian natural 6th
+  // E3=G(R):43✓, D3=F(b7):53✓, G5=C(4):60✓, B5=E(13):64✓  (13th/6th of G Dorian=E✓)
+  {id:'qDorian',   name:'Quartal Dorian',  sym:'(4)D', cat:'quartal',movable:true,voicings:[{label:'6-4-3-2 R-b7-4-13 · ex G Dorian@3fr',str:[3,-1,3,5,5,-1],deg:['R',null,'b7','4','13',null],sf:3}]},
+
+  // Quartal Sus2 (5-4-3-2-1): voiced in stacked 4ths over a sus2 colour
+  // A3=C(R):48✓, D2=E(9? — wait 2nd/9th of C=D not E). Hmm: 2nd of C=D: D str open=50=D✓ but fret 0 not movable.
+  // Use: A5=D(R):50✓, D4=G(4):54? 50+4=54=F#... nope. Let me use: A3=C(R):48, D5=G(5):55, G5=C(R):60, B3=D(9):62✓
+  // Actually for quartal sus2 — R-5-9 on 5-3-2: A3=C(R), G4=B(7)? Not sus. Skip complex one.
+  // Simple: 5-4-3 R-5-2: A3=C(R):48, D5=G(5):55, G2=A(9? — 2nd/9th of C=D not A. G2=57=A=6th not 9th.
+  // Skip quartal sus2 — can't make it clean without open strings or losing movability.
+
+  // ── COWBOY additions ─────────────────────────────────────────────────────
+  // Em(maj7) open — hauntingly beautiful, used in My Funny Valentine descending bass
+  // E0=E(R):40✓, A2=B(5):47✓, D1=D#(7):51✓ (maj7 of E=D#✓), G0=G(b3):55✓, B0=B(5):59✓, e0=E(R):64✓
+  {id:'cEmMaj7',  name:'Em(maj7)',         sym:'Em(Δ)',cat:'cowboy',voicings:[{label:'Open',str:[0,2,1,0,0,0],deg:['R','5','7','b3','5','R'],sf:1}]},
+  // Bm7 open position: A2=B(R):47✓, D4=F#(5):54✓, G2=A(b7):57✓, B3=D(b3):62✓, e2=F#(5):66✓
+  {id:'cBm7',     name:'Bm7',              sym:'Bm7',  cat:'cowboy',voicings:[{label:'Open',str:[-1,2,4,2,3,2],deg:[null,'R','5','b7','b3','5'],sf:2}]},
+  // E9 open: E0=E(R):40✓, A2=B(5):47✓, D0=D(b7):50✓, G1=Ab/G#(3):56✓, B0=B(5):59✓, e2=F#(9):66✓
+  {id:'cE9',      name:'E9',               sym:'E9',   cat:'cowboy',voicings:[{label:'Open',str:[0,2,0,1,0,2],deg:['R','5','b7','3','5','9'],sf:1}]},
+  // G6 open: E3=G(R):43✓, A2=B(3):47✓, D0=D(5):50✓, G0=G(R):55✓, B0=B(3):59✓, e0=E(6):64✓
+  {id:'cG6',      name:'G6',               sym:'G6',   cat:'cowboy',voicings:[{label:'Open',str:[3,2,0,0,0,0],deg:['R','3','5','R','3','6'],sf:1}]},
+  // Am9 open: A0=A(R):45✓, D2=E(5):52✓, G4=B(9):59✓ (9th=B✓), B1=C(b3):60✓, e0=E(5):64✓
+  {id:'cAm9',     name:'Am9',              sym:'Am9',  cat:'cowboy',voicings:[{label:'Open',str:[-1,0,2,4,1,0],deg:[null,'R','5','9','b3','5'],sf:1}]},
+  // G9 open: E3=G(R):43✓, A0=A(9):45✓, D0=D(5):50✓, G0=G(R):55✓, B0=B(3):59✓, e1=F(b7):65✓
+  {id:'cG9',      name:'G9',               sym:'G9',   cat:'cowboy',voicings:[{label:'Open',str:[3,0,0,0,0,1],deg:['R','9','5','R','3','b7'],sf:1}]},
+
+  // ── SHELL additions ──────────────────────────────────────────────────────
+  // Dom9 shell (R-b7-9): E3=G(R):43✓, D3=F(b7):53✓, G2=A(9):57✓ (9th of G=A✓)
+  {id:'shDom9_6', name:'Dom9 Shell 6th',   sym:'9',    cat:'shell',movable:true,voicings:[{label:'6-4-3 R-b7-9 · ex G9@2fr',str:[3,-1,3,2,-1,-1],deg:['R',null,'b7','9',null,null],sf:2}]},
+  // 7#9 shell (R-b7-#9): E3=G(R):43✓, D3=F(b7):53✓, G3=Bb(#9):58✓ (#9 of G=A#=Bb✓)
+  {id:'sh7s9_6',  name:'7#9 Shell',        sym:'7#9',  cat:'shell',movable:true,voicings:[{label:'6-4-3 R-b7-#9 · ex G7#9@3fr',str:[3,-1,3,3,-1,-1],deg:['R',null,'b7','#9',null,null],sf:3}]},
+  // min(Δ7) shell 5th str: A3=C(R):48✓, D1=Eb(b3):51✓, G4=B(7):59✓ (maj7 of C=B✓)
+  {id:'shMinMaj7_5b',name:'min(Δ7) Shell 5th',sym:'m(Δ)',cat:'shell',movable:true,voicings:[{label:'5-4-3 R-b3-7 · ex Cm(Δ)@1fr',str:[-1,3,1,4,-1,-1],deg:[null,'R','b3','7',null,null],sf:1}]},
+
+  // ── DROP 3 completions (5-4-2-1) ─────────────────────────────────────────
+  // m7b5 Drop3 5-4-2-1: A3=C(R):48✓, D4=F#(b5):54✓ (b5 of C=F#/Gb✓), B4=Eb(b3):63✓, e6=Bb(b7):70✓
+  {id:'d3m7b5_5', name:'m7b5 Drop3',       sym:'ø',    cat:'drop3',movable:true,voicings:[{label:'5-4-2-1 R-b5-b3-b7 · ex Cø@3fr',str:[-1,3,4,-1,4,6],deg:[null,'R','b5',null,'b3','b7'],sf:3}]},
+  // dim7 Drop3 5-4-2-1: A3=C(R):48✓, D4=F#(b5):54✓, B4=Eb(b3):63✓, e5=A(bb7):69✓ (bb7 of C=A✓)
+  {id:'d3dim7_5', name:'Dim7 Drop3',       sym:'°7',   cat:'drop3',movable:true,voicings:[{label:'5-4-2-1 R-b5-b3-bb7 · ex Cdim7@3fr',str:[-1,3,4,-1,4,5],deg:[null,'R','b5',null,'b3','bb7'],sf:3}]},
+  // min(Δ7) Drop3 5-4-2-1: A3=C(R):48✓, D5=G(5):55✓, B4=Eb(b3):63✓, e7=B(7):71✓ (maj7 of C=B✓)
+  {id:'d3mMaj7_5',name:'min(Δ7) Drop3',    sym:'m(Δ)', cat:'drop3',movable:true,voicings:[{label:'5-4-2-1 R-5-b3-7 · ex Cm(Δ)@3fr',str:[-1,3,5,-1,4,7],deg:[null,'R','5',null,'b3','7'],sf:3}]},
+
+  // ── SPREAD additions ─────────────────────────────────────────────────────
+  // Spread Aug (6-3-2): E3=G(R):43✓, G4=B(3):59✓, B4=Eb(#5):63✓ (#5 of G=D#/Eb✓)
+  {id:'spAug',    name:'Spread Aug',        sym:'+',    cat:'spread',movable:true,voicings:[{label:'6-3-2 R-3-#5 · ex G+@3fr',str:[3,-1,-1,4,4,-1],deg:['R',null,null,'3','#5',null],sf:3}]},
+  // Spread Dom9 (6-3-2): E3=G(R):43✓, G2=A(9):57✓ (9th of G=A✓), B6=F(b7):65✓
+  {id:'spDom9',   name:'Spread Dom9',       sym:'9',    cat:'spread',movable:true,voicings:[{label:'6-3-2 R-9-b7 · ex G9@2fr',str:[3,-1,-1,2,6,-1],deg:['R',null,null,'9','b7',null],sf:2}]},
+  // Spread Maj6/9 (6-3-2): E3=G(R):43✓, G2=A(9):57✓, B5=E(6):64✓ (6th/13th of G=E✓)
+  {id:'spMaj69',  name:'Spread 6/9',        sym:'6/9',  cat:'spread',movable:true,voicings:[{label:'6-3-2 R-9-6 · ex G6/9@2fr',str:[3,-1,-1,2,5,-1],deg:['R',null,null,'9','6',null],sf:2}]},
+];const PROGS=[
   {title:'ii–V–I · C major',feel:'Jazz',desc:'The cornerstone of jazz. Dm7 creates tension, G7 raises it, Cmaj7 resolves.',chords:[{sym:'Dm7',rn:'ii',v:{str:[-1,5,3,5,-1,-1],deg:[null,'R','b3','b7',null,null],sf:3}},{sym:'G7',rn:'V',v:{str:[3,-1,3,4,-1,-1],deg:['R',null,'b7','3',null,null],sf:1}},{sym:'Cmaj7',rn:'I',v:{str:[-1,3,2,4,-1,-1],deg:[null,'R','3','7',null,null],sf:1}}]},
   {title:'I–VI–ii–V · C major',feel:'Jazz',desc:'Classic turnaround — relative minor and subdominant before resolving.',chords:[{sym:'Cmaj7',rn:'I',v:{str:[-1,3,2,4,-1,-1],deg:[null,'R','3','7',null,null],sf:1}},{sym:'Am7',rn:'vi',v:{str:[5,-1,5,5,-1,-1],deg:['R',null,'b7','b3',null,null],sf:5}},{sym:'Dm7',rn:'ii',v:{str:[-1,5,3,5,-1,-1],deg:[null,'R','b3','b7',null,null],sf:3}},{sym:'G7',rn:'V',v:{str:[3,-1,3,4,-1,-1],deg:['R',null,'b7','3',null,null],sf:1}}]},
   {title:'12-Bar Blues · E',feel:'Blues',desc:'The foundation of blues, rock, and jazz. Three open dominant 7ths.',chords:[{sym:'E7',rn:'I7',v:{str:[0,2,0,1,0,0],deg:['R','5','b7','3','5','R'],sf:1}},{sym:'A7',rn:'IV7',v:{str:[-1,0,2,0,2,0],deg:[null,'R','5','b7','3','5'],sf:1}},{sym:'B7',rn:'V7',v:{str:[-1,2,1,2,0,2],deg:[null,'R','3','b7','R','5'],sf:1}}]},
@@ -339,10 +469,10 @@ const EXT_TESTS={
 
 
 const FEEL_TO_CAT={
-  'Jazz':'Jazz','Bebop':'Jazz','Bebop/Modern':'Jazz','Jazz Standard':'Jazz','Jazz Waltz':'Jazz','Modal Jazz':'Jazz','Jazz / Fusion':'Jazz','Jazz Comping':'Jazz',
+  'Jazz':'Jazz','Bebop':'Jazz','Bebop/Modern':'Jazz','Jazz Standard':'Jazz','Jazz Waltz':'Jazz','Modal Jazz':'Jazz','Jazz / Fusion':'Jazz','Jazz Comping':'Jazz','Jazz Fusion':'Jazz','Jazz Minor':'Jazz','Smooth Jazz':'Jazz',
   'Blues':'Blues','Gospel/Blues':'Blues','Minor Blues':'Blues',
-  'Pop':'Rock & Pop','Pop/50s':'Rock & Pop','Pop/Soul':'Rock & Pop','Pop / Soul':'Rock & Pop','Pop/Rock':'Rock & Pop','Folk/Country':'Rock & Pop','Rock':'Rock & Pop','Rock/Classical':'Rock & Pop','Rock/Modal':'Rock & Pop','Rock / Classical':'Rock & Pop',
-  'R&B/Soul':'Soul & R&B','Neo-Soul/R&B':'Soul & R&B','Neo-Soul':'Soul & R&B','Neo-Soul / R&B':'Soul & R&B','Funk/Soul':'Soul & R&B','Gospel':'Soul & R&B',
+  'Pop':'Rock & Pop','Pop/50s':'Rock & Pop','Pop/Soul':'Rock & Pop','Pop / Soul':'Rock & Pop','Pop/Rock':'Rock & Pop','Folk/Country':'Rock & Pop','Rock':'Rock & Pop','Rock/Classical':'Rock & Pop','Rock/Modal':'Rock & Pop','Rock / Classical':'Rock & Pop','Classical/Pop':'Rock & Pop',
+  'R&B/Soul':'Soul & R&B','Neo-Soul/R&B':'Soul & R&B','Neo-Soul':'Soul & R&B','Neo-Soul / R&B':'Soul & R&B','Funk/Soul':'Soul & R&B','Gospel':'Soul & R&B','Soul/R&B':'Soul & R&B',
   'Bossa Nova':'Latin','Samba':'Latin','Samba / Brazilian':'Latin','Flamenco':'Latin','Tango':'Latin',
   'Classical':'Classical',
 };
@@ -796,7 +926,9 @@ const RN_OFFSETS={
 const Q_SUFFIX={
   'maj7':'maj7','m7':'m7','7':'7','maj':'','min':'m','m7b5':'m7b5',
   'dim7':'dim7','7b9':'7b9','9':'9','maj9':'maj9','m9':'m9',
-  '6':'6','7sus4':'7sus4','m6':'m6',
+  '6':'6','7sus4':'7sus4','m6':'m6','sus2':'sus2','sus4':'sus4',
+  'aug':'+','9sus4':'9sus4','13sus4':'13sus4','maj7s5':'maj7#5',
+  'm13':'m13','maj9s11':'maj9#11','9s11':'9#11','mMaj7':'(Δ7)',
 };
 const QTMPL={
   'maj7':{str:[-1,3,2,4,-1,-1],deg:[null,'R','3','7',null,null],sf:1},
@@ -812,6 +944,14 @@ const QTMPL={
   'm9':{str:[-1,3,1,3,3,-1],deg:[null,'R','b3','b7','9',null],sf:1},
   '7sus4':{str:[-1,3,3,3,-1,-1],deg:[null,'R','4','b7',null,null],sf:3},
   '6':{str:[-1,3,2,2,3,-1],deg:[null,'R','3','6','9',null],sf:2},
+  'sus2':{str:[-1,3,5,5,3,3],deg:[null,'R','5','R','2','5'],sf:3},
+  'sus4':{str:[-1,3,5,5,6,3],deg:[null,'R','5','R','4','5'],sf:3},
+  'aug':{str:[-1,3,2,1,-1,-1],deg:[null,'R','3','#5',null,null],sf:1},
+  'm6':{str:[-1,3,1,2,-1,-1],deg:[null,'R','b3','6',null,null],sf:1},
+  '9sus4':{str:[-1,3,3,3,3,-1],deg:[null,'R','4','b7','9',null],sf:3},
+  'maj7s5':{str:[3,2,4,-1,4,-1],deg:['R','3','7',null,'#5',null],sf:2},
+  // min(Δ7) — minor triad + major 7th. A3=C(R), D1=Eb(b3):51✓, G4=B(7):59✓
+  'mMaj7':{str:[-1,3,1,4,-1,-1],deg:[null,'R','b3','7',null,null],sf:1},
 };
 const TMPL_ROOT=0;
 function transposeFromTemplate(tmpl,targetNote){
@@ -887,6 +1027,41 @@ const PROGS_RN=[
   {title:'Perfect Cadence · V–I',feel:'Classical',desc:'V creates maximum harmonic tension; I resolves it. The most fundamental move in Western music.',chords:[{rn:'V',q:'7'},{rn:'I',q:'maj'}]},
   {title:'Deceptive Cadence · V–vi',feel:'Classical',desc:'V resolves to vi instead of I, surprising the listener. Creates forward momentum.',chords:[{rn:'V',q:'7'},{rn:'vi',q:'min'}]},
   {title:'Neapolitan · bII–V–I',feel:'Classical',desc:'The Neapolitan chord (bII major) adds a dramatic Romantic-era colour before V–I.',chords:[{rn:'bII',q:'maj'},{rn:'V',q:'7'},{rn:'I',q:'maj'}]},
+  // ── SUS chord progressions ──────────────────────────────────────────────
+  {title:'I–Vsus4–V–I',feel:'Classical/Pop',desc:'The suspended 4th on V delays resolution, creating anticipation. Heard in everything from Bach to pop ballads.',chords:[{rn:'I',q:'maj'},{rn:'V',q:'sus4'},{rn:'V',q:'maj'},{rn:'I',q:'maj'}]},
+  {title:'I9sus4–I7–IV',feel:'Soul/R&B',desc:'The 9sus4 "floating" sound resolving through the dominant 7th to IV. A signature move in soul and gospel.',chords:[{rn:'I',q:'9sus4'},{rn:'I',q:'7'},{rn:'IV',q:'maj7'}]},
+  {title:'IV9sus4–I–IV9sus4–V',feel:'Jazz Fusion',desc:'Suspended dominants create an unresolved modal floating quality. Classic Miles Davis electric era.',chords:[{rn:'IV',q:'9sus4'},{rn:'I',q:'maj7'},{rn:'IV',q:'9sus4'},{rn:'V',q:'7sus4'}]},
+  {title:'i–Vsus4–V–i',feel:'Classical',desc:'Minor key suspension. The sus4 delay makes the resolution to harmonic minor V feel inevitable.',chords:[{rn:'i',q:'min'},{rn:'V',q:'sus4'},{rn:'V',q:'7'},{rn:'i',q:'min'}]},
+  {title:'Isus2–I–IVsus2–IV',feel:'Rock/Pop',desc:'Sus2 colours give a hazy, impressionistic quality. Widely used in guitar-driven rock and singer-songwriter.',chords:[{rn:'I',q:'sus2'},{rn:'I',q:'maj'},{rn:'IV',q:'sus2'},{rn:'IV',q:'maj'}]},
+  // ── AUGMENTED chord progressions ────────────────────────────────────────
+  {title:'I–I+–IV–iv',feel:'Pop/Soul',desc:'The tonic augmented chord creates a rising chromatic bass line (R→#5→R of IV). James Taylor, Beatles, bossa nova.',chords:[{rn:'I',q:'maj'},{rn:'I',q:'aug'},{rn:'IV',q:'maj'},{rn:'iv',q:'min'}]},
+  {title:'I–VI+–ii–V',feel:'Jazz',desc:'Augmented VI substitutes for the dominant VI7, creating a chromatic approach into ii. Lush and chromatic.',chords:[{rn:'I',q:'maj7'},{rn:'VI',q:'aug'},{rn:'ii',q:'m7'},{rn:'V',q:'7'}]},
+  {title:'IΔ#5–IV–IΔ#5–V',feel:'Jazz',desc:'Maj7#5 as the tonic sound — the Lydian augmented quality. Static, dreamy, and harmonically ambiguous.',chords:[{rn:'I',q:'maj7s5'},{rn:'IV',q:'maj7'},{rn:'I',q:'maj7s5'},{rn:'V',q:'7'}]},
+  // ── 6TH CHORD progressions ──────────────────────────────────────────────
+  {title:'I6–vi–ii–V',feel:'Jazz',desc:'The major 6th tonic is warmer and less static than maj7. Common in older jazz standards and stride piano style.',chords:[{rn:'I',q:'6'},{rn:'vi',q:'m7'},{rn:'ii',q:'m7'},{rn:'V',q:'7'}]},
+  {title:'I6/9–IV6/9–ii9–V13',feel:'Jazz',desc:'All-extensions progression. 6/9 tonics, a ii9, and a V13 — the fully voiced jazz harmony palette.',chords:[{rn:'I',q:'6'},{rn:'IV',q:'6'},{rn:'ii',q:'9'},{rn:'V',q:'9'}]},
+  {title:'im6–iv–V7b9–im6',feel:'Jazz Minor',desc:'The minor 6 tonic chord (used by Wes Montgomery and Bill Evans) — richer than plain minor, no b7 tension.',chords:[{rn:'i',q:'m6'},{rn:'iv',q:'m7'},{rn:'V',q:'7b9'},{rn:'i',q:'m6'}]},
+  {title:'I–I+–I6–I7',feel:'Blues/Soul',desc:'Chromatic voice leading on a static tonic: R→#5→6→b7. Common in slow blues and Ray Charles-style soul.',chords:[{rn:'I',q:'maj'},{rn:'I',q:'aug'},{rn:'I',q:'6'},{rn:'I',q:'7'}]},
+  // ── LYDIAN progressions ─────────────────────────────────────────────────
+  {title:'IΔ9#11–V–IΔ9#11',feel:'Modal Jazz',desc:'Maj9#11 as a static Lydian tonic. The #11 gives a shimmering, floating quality without strong resolution.',chords:[{rn:'I',q:'maj9s11'},{rn:'V',q:'7'},{rn:'I',q:'maj9s11'}]},
+  {title:'IV9#11–I–IV9#11–bVII7',feel:'Jazz Fusion',desc:'Lydian dominant IV — the #11 lights up the IV chord. Combines with a bluesy bVII7 for fusion colour.',chords:[{rn:'IV',q:'9s11'},{rn:'I',q:'maj7'},{rn:'IV',q:'9s11'},{rn:'bVII',q:'7'}]},
+  // ── QUARTAL progressions ──────────────────────────────────────────────
+  {title:'Quartal Vamp · i–bii',feel:'Modal Jazz',desc:"Two quartal chords a half step apart — the So What sound. Harmonically ambiguous, no strong tonal pull. McCoy Tyner's signature.",chords:[{rn:'i',q:'m9'},{rn:'bii',q:'m9'}]},
+  {title:'Quartal landing · IΔ9–V7sus4–IΔ9',feel:'Modal Jazz',desc:'Stable extended tonic with a suspended dominant. Pat Metheny and Keith Jarrett territory — diatonic but open-voiced.',chords:[{rn:'I',q:'maj9'},{rn:'V',q:'7sus4'},{rn:'I',q:'maj9'}]},
+  {title:'Quartal blues · I9–IV9sus4–I9–V9sus4',feel:'Blues',desc:'Blues with quartal-flavoured dominant 9th and suspended chords. The Herbie Hancock Maiden Voyage harmonic world.',chords:[{rn:'I',q:'9'},{rn:'IV',q:'9sus4'},{rn:'I',q:'9'},{rn:'V',q:'9sus4'}]},
+  // ── min(Δ7) progressions ──────────────────────────────────────────────
+  {title:'i(Δ7)–im7–iv–V',feel:'Jazz Minor',desc:'The classic My Funny Valentine inner-voice descent: Δ7→b7 in the tonic, voice-leading into the subdominant.',chords:[{rn:'i',q:'mMaj7'},{rn:'i',q:'m7'},{rn:'iv',q:'m7'},{rn:'V',q:'7'}]},
+  {title:'im(Δ7)–iv9–bVIΔ–V7b9',feel:'Jazz Minor',desc:'Minor-major 7th tonic into a dark jazz-minor cadence. Cinematic and emotionally rich.',chords:[{rn:'i',q:'mMaj7'},{rn:'iv',q:'m9'},{rn:'bVI',q:'maj7'},{rn:'V',q:'7b9'}]},
+  // ── Chromatic inner-voice ─────────────────────────────────────────────
+  {title:'I–I+–IVΔ7–IVm6',feel:'Pop/Soul',desc:"The chromatic 5th descent (R→#5→R of IV): I, I+, IVΔ, IVm. Beatles' Michelle, bossa nova, James Taylor.",chords:[{rn:'I',q:'maj'},{rn:'I',q:'aug'},{rn:'IV',q:'maj7'},{rn:'iv',q:'m6'}]},
+  {title:'I–I+–IVΔ9–ivm',feel:'Soul/R&B',desc:'Same chromatic bass line as above but with extended maj9 tonic landing, giving a richer contemporary feel.',chords:[{rn:'I',q:'maj'},{rn:'I',q:'aug'},{rn:'IV',q:'maj9'},{rn:'iv',q:'min'}]},
+  // ── Extended smooth jazz ──────────────────────────────────────────────
+  {title:'IΔ9–iiim9–vim9–bVII9',feel:'Smooth Jazz',desc:'Smooth descending diatonic + borrowed 9th chords. Every note of movement is a 9th chord — the Wes Montgomery and Mike Stern vocabulary.',chords:[{rn:'I',q:'maj9'},{rn:'iii',q:'m9'},{rn:'vi',q:'m9'},{rn:'bVII',q:'9'}]},
+  {title:'ii9–V9sus4–IΔ9',feel:'Jazz',desc:'Modern jazz landing: suspended V with extensions resolves to a fully voiced tonic. Herbie Hancock and Chick Corea hallmark.',chords:[{rn:'ii',q:'m9'},{rn:'V',q:'9sus4'},{rn:'I',q:'maj9'}]},
+  {title:'IΔ9–iiim7–ii9–V9',feel:'Jazz',desc:'Smooth diatonic cycle: tonic→mediant→subdominant→dominant, all voiced with extensions. Sophisticated and forward-moving.',chords:[{rn:'I',q:'maj9'},{rn:'iii',q:'m7'},{rn:'ii',q:'9'},{rn:'V',q:'9'}]},
+  // ── 6th chord jazz ────────────────────────────────────────────────────
+  {title:'im6–bVIIΔ7–bVI6–V7',feel:'Jazz Minor',desc:'Minor 6th tonic — a warmer sound with no b7 tension. Through bVII and bVI6 before resolving. Grant Green, Wes Montgomery.',chords:[{rn:'i',q:'m6'},{rn:'bVII',q:'maj7'},{rn:'bVI',q:'6'},{rn:'V',q:'7'}]},
+  {title:'I6–IV9–I6–V9',feel:'Blues',desc:'Jazz blues with 6th and 9th dominant chords throughout. The Grant Green and Wes Montgomery blues vocabulary.',chords:[{rn:'I',q:'6'},{rn:'IV',q:'9'},{rn:'I',q:'6'},{rn:'V',q:'9'}]},
 ];
 
 function ProgressionsTab({showDeg}){
