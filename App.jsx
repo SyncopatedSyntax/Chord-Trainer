@@ -12,6 +12,7 @@ const CATS={
   barre:{label:'Barre Chords',color:'#ff6b6b'},
   shell:{label:'Shell Chords',color:'#a29bfe'},
   drop2:{label:'Drop 2',color:'#4ecdc4'},
+  drop3:{label:'Drop 3',color:'#e8a838'},
   drop24:{label:'Drop 2 & 4',color:'#00b894'},
   ext:{label:'Extensions',color:'#fd79a8'},
   altered:{label:'Altered',color:'#e17055'},
@@ -128,6 +129,87 @@ const CHORDS=[
   {id:'dom7b13',name:'Dom 7b13',sym:'7b13',cat:'altered',movable:true,voicings:[{label:'6543 R-3-b7-b13',str:[3,2,3,4,-1,-1],deg:['R','3','b7','b13',null,null],sf:1}]},
   {id:'m7b5',name:'Half-dim m7b5',sym:'ø',cat:'altered',movable:true,voicings:[{label:'6543 R-b3-b5-b7 · ex Bø',str:[7,5,3,2,-1,-1],deg:['R','b3','b5','b7',null,null],sf:2}]},
   {id:'dim7',name:'Dim7 Full',sym:'°7',cat:'altered',movable:true,voicings:[{label:'5432 R-b5-bb7-b3',str:[-1,2,3,1,3,-1],deg:[null,'R','b5','bb7','b3',null],sf:1}]},
+  // ── COWBOY / OPEN additions ────────────────────────────────────────────
+  // Power chords (5th chords) — rock/metal essential
+  // E5: E0=E(R), A2=B(5), D2=E(R)
+  {id:'cE5',name:'E5',sym:'E5',cat:'cowboy',voicings:[{label:'Power chord',str:[0,2,2,-1,-1,-1],deg:['R','5','R',null,null,null],sf:1}]},
+  // A5: A0=A(R), D2=E(5), G2=A(R)
+  {id:'cA5',name:'A5',sym:'A5',cat:'cowboy',voicings:[{label:'Power chord',str:[-1,0,2,2,-1,-1],deg:[null,'R','5','R',null,null],sf:1}]},
+  // D5: D0=D(R), G2=A(5): 55+2=57=A✓, B3=D(R): 59+3=62=D✓
+  {id:'cD5',name:'D5',sym:'D5',cat:'cowboy',voicings:[{label:'Power chord',str:[-1,-1,0,2,3,-1],deg:[null,null,'R','5','R',null],sf:1}]},
+  // Open B minor — A2=B(R): 47, D4=F#(5): 54, G4=B(R): 59, B3=D(b3): 62, e2=F#(5): 66
+  {id:'cBm',name:'B Minor',sym:'Bm',cat:'cowboy',voicings:[{label:'Open',str:[-1,2,4,4,3,2],deg:[null,'R','5','R','b3','5'],sf:2}]},
+  // Am(maj7) open: A0=A(R), D2=E(5): 52, G1=G#(7): 56, B1=C(b3): 60, e0=E(5)
+  {id:'cAmMaj7',name:'Am(maj7)',sym:'Am(Δ)',cat:'cowboy',voicings:[{label:'Open',str:[-1,0,2,1,1,0],deg:[null,'R','5','7','b3','5'],sf:1}]},
+  // Am6 open: A0=A(R), D2=E(5): 52, G2=A(R): 57, B1=C(b3): 60, e2=F#(6): 66
+  {id:'cAm6',name:'Am6',sym:'Am6',cat:'cowboy',voicings:[{label:'Open',str:[-1,0,2,2,1,2],deg:[null,'R','5','R','b3','6'],sf:1}]},
+  // ── BARRE additions ────────────────────────────────────────────────────
+  // Min7 E-shape barre — ex Am7@5fr: E5=A(R), A7=E(5): 52, D7=A(R): 57, G5=C(b3): 60, B8=G(b7): 67, e5=A(R): 69
+  {id:'bEMin7',name:'Min7 E-shape',sym:'m7',cat:'barre',movable:true,voicings:[{label:'6th-str root · ex Am7@5fr',str:[5,7,7,5,8,5],deg:['R','5','R','b3','b7','R'],sf:5}]},
+  // Min7 A-shape barre — ex Dm7@5fr: A5=D(R), D7=A(5): 57, G5=C(b7): 60, B6=F(b3): 65, e5=A(5): 69
+  {id:'bAMin7',name:'Min7 A-shape',sym:'m7',cat:'barre',movable:true,voicings:[{label:'5th-str root · ex Dm7@5fr',str:[-1,5,7,5,6,5],deg:[null,'R','5','b7','b3','5'],sf:5}]},
+  // Dom9 A-shape barre — ex D9@5fr: A5=D(R), D7=A(5): 57, G5=C(b7): 60, B5=E(9): 64, e5=A(5): 69
+  {id:'bA9',name:'Dom9 A-shape',sym:'9',cat:'barre',movable:true,voicings:[{label:'5th-str root · ex D9@5fr',str:[-1,5,7,5,5,5],deg:[null,'R','5','b7','9','5'],sf:5}]},
+  // ── SHELL additions ────────────────────────────────────────────────────
+  // min(maj7) shell 6th string: R-7-b3 on 6-4-3 — ex GmΔ7@1fr: E3=G(R), D4=F#(7): 54, G3=Bb(b3): 58
+  {id:'shMinMaj7_6',name:'min(Δ7) Shell 6th',sym:'m(Δ)',cat:'shell',movable:true,voicings:[{label:'6-4-3 R-7-b3 · ex GmΔ@1fr',str:[3,-1,4,3,-1,-1],deg:['R',null,'7','b3',null,null],sf:1}]},
+  // min(maj7) shell 5th string: R-b3-7 on 5-4-3 — ex CmΔ7@1fr: A3=C(R), D1=Eb(b3): 51, G4=B(7): 59
+  {id:'shMinMaj7_5',name:'min(Δ7) Shell 5th',sym:'m(Δ)',cat:'shell',movable:true,voicings:[{label:'5-4-3 R-b3-7 · ex CmΔ@1fr',str:[-1,3,1,4,-1,-1],deg:[null,'R','b3','7',null,null],sf:1}]},
+  // Maj6 shell 6th string: R-6-3 on 6-4-3 — ex G6@1fr: E3=G(R), D2=E(6): 52, G4=B(3): 59
+  {id:'shMaj6_6',name:'Maj6 Shell 6th',sym:'6',cat:'shell',movable:true,voicings:[{label:'6-4-3 R-6-3 · ex G6@1fr',str:[3,-1,2,4,-1,-1],deg:['R',null,'6','3',null,null],sf:1}]},
+  // Min6 shell 6th string: R-6-b3 on 6-4-3 — ex Am6@5fr: E5=A(R), D4=F#(6): 54, G5=C(b3): 60
+  {id:'shMin6_6',name:'Min6 Shell 6th',sym:'m6',cat:'shell',movable:true,voicings:[{label:'6-4-3 R-6-b3 · ex Am6@5fr',str:[5,-1,4,5,-1,-1],deg:['R',null,'6','b3',null,null],sf:4}]},
+  // ── DROP 2 additions ───────────────────────────────────────────────────
+  // Dim7 Drop2 on 6543 — Cdim7: b5=F#(E2+2=42), R=C(A+3=48), b3=Eb(D+1=51), bb7=A(G+2=57)
+  {id:'d2dim7_6',name:'Dim7 Drop2',sym:'°7',cat:'drop2',movable:true,voicings:[{label:'6543 b5-R-b3-bb7 · ex Cdim7',str:[2,3,1,2,-1,-1],deg:['b5','R','b3','bb7',null,null],sf:1}]},
+  // Min6 Drop2 on 5432 — 5-R-b3-6: ex Gm6@3fr: A5=D(5), D5=G(R), G3=Bb(b3), B5=E(6)
+  {id:'d2min6_5',name:'Min6 Drop2',sym:'m6',cat:'drop2',movable:true,voicings:[{label:'5432 5-R-b3-6 · ex Gm6@3fr',str:[-1,5,5,3,5,-1],deg:[null,'5','R','b3','6',null],sf:3}]},
+  // Maj6 Drop2 on 5432 — 5-R-3-6: ex G6@4fr: A5=D(5), D5=G(R), G4=B(3), B5=E(6)
+  {id:'d2maj6_5',name:'Maj6 Drop2',sym:'6',cat:'drop2',movable:true,voicings:[{label:'5432 5-R-3-6 · ex G6@4fr',str:[-1,5,5,4,5,-1],deg:[null,'5','R','3','6',null],sf:4}]},
+  // min(Δ7) Drop2 on 5432 — 5-R-b3-7: ex GmΔ@3fr: A5=D(5), D5=G(R), G3=Bb(b3), B7=F#(7)
+  {id:'d2minMaj7_5',name:'min(Δ7) Drop2',sym:'m(Δ)',cat:'drop2',movable:true,voicings:[{label:'5432 5-R-b3-7 · ex GmΔ@3fr',str:[-1,5,5,3,7,-1],deg:[null,'5','R','b3','7',null],sf:3}]},
+  // ── DROP 3 — strings 6-5-3-2 (D string muted) ──────────────────────────
+  // Drop 3: 3rd note from top of close voicing dropped an octave → spread voicing on non-adjacent strings.
+  // All examples at G root (fret 3 on E string). String 4 (D) is always muted.
+  // Gmaj7: E3=G(R), A5=D(5): 50, G4=B(3): 59, B7=F#(7): 66
+  {id:'d3maj7_6',name:'Maj7 Drop3',sym:'Δ',cat:'drop3',movable:true,voicings:[{label:'6-5-3-2 R-5-3-7 · ex Gmaj7@3fr',str:[3,5,-1,4,7,-1],deg:['R','5',null,'3','7',null],sf:3}]},
+  // G7: E3=G(R), A5=D(5): 50, G4=B(3): 59, B6=F(b7): 65
+  {id:'d3dom7_6',name:'Dom7 Drop3',sym:'7',cat:'drop3',movable:true,voicings:[{label:'6-5-3-2 R-5-3-b7 · ex G7@3fr',str:[3,5,-1,4,6,-1],deg:['R','5',null,'3','b7',null],sf:3}]},
+  // Gm7: E3=G(R), A5=D(5): 50, G3=Bb(b3): 58, B6=F(b7): 65
+  {id:'d3min7_6',name:'Min7 Drop3',sym:'m7',cat:'drop3',movable:true,voicings:[{label:'6-5-3-2 R-5-b3-b7 · ex Gm7@3fr',str:[3,5,-1,3,6,-1],deg:['R','5',null,'b3','b7',null],sf:3}]},
+  // Gø: E3=G(R), A4=Db(b5): 49, G3=Bb(b3): 58, B6=F(b7): 65
+  {id:'d3m7b5_6',name:'m7b5 Drop3',sym:'ø',cat:'drop3',movable:true,voicings:[{label:'6-5-3-2 R-b5-b3-b7 · ex Gø@3fr',str:[3,4,-1,3,6,-1],deg:['R','b5',null,'b3','b7',null],sf:3}]},
+  // Gdim7: E3=G(R), A4=Db(b5): 49, G3=Bb(b3): 58, B5=E(bb7): 64 [bb7 of G = E]
+  {id:'d3dim7_6',name:'Dim7 Drop3',sym:'°7',cat:'drop3',movable:true,voicings:[{label:'6-5-3-2 R-b5-b3-bb7 · ex Gdim7@3fr',str:[3,4,-1,3,5,-1],deg:['R','b5',null,'b3','bb7',null],sf:3}]},
+  // GmΔ7: E3=G(R), A5=D(5): 50, G3=Bb(b3): 58, B7=F#(7): 66
+  {id:'d3minMaj7_6',name:'min(Δ7) Drop3',sym:'m(Δ)',cat:'drop3',movable:true,voicings:[{label:'6-5-3-2 R-5-b3-7 · ex GmΔ@3fr',str:[3,5,-1,3,7,-1],deg:['R','5',null,'b3','7',null],sf:3}]},
+  // Drop 3 — strings 5-4-2-1 (G string muted) ─────────────────────────
+  // All examples at C root (fret 3 on A string). String 3 (G) is always muted.
+  // Cmaj7: A3=C(R), D5=G(5): 55, B5=E(3): 64, e7=B(7): 71
+  {id:'d3maj7_5',name:'Maj7 Drop3',sym:'Δ',cat:'drop3',movable:true,voicings:[{label:'5-4-2-1 R-5-3-7 · ex Cmaj7@3fr',str:[-1,3,5,-1,5,7],deg:[null,'R','5',null,'3','7'],sf:3}]},
+  // C7: A3=C(R), D5=G(5): 55, B5=E(3): 64, e6=Bb(b7): 70
+  {id:'d3dom7_5',name:'Dom7 Drop3',sym:'7',cat:'drop3',movable:true,voicings:[{label:'5-4-2-1 R-5-3-b7 · ex C7@3fr',str:[-1,3,5,-1,5,6],deg:[null,'R','5',null,'3','b7'],sf:3}]},
+  // Cm7: A3=C(R), D5=G(5): 55, B4=Eb(b3): 63, e6=Bb(b7): 70
+  {id:'d3min7_5',name:'Min7 Drop3',sym:'m7',cat:'drop3',movable:true,voicings:[{label:'5-4-2-1 R-5-b3-b7 · ex Cm7@3fr',str:[-1,3,5,-1,4,6],deg:[null,'R','5',null,'b3','b7'],sf:3}]},
+  // ── EXTENSION additions ────────────────────────────────────────────────
+  // min(Δ7) full voicing 6543 — ex Am(Δ7)@5fr: E5=A(R), A3=C(b3): 48, D2=E(5): 52, G1=G#(7): 56
+  {id:'minMaj7',name:'min(maj7)',sym:'m(Δ)',cat:'ext',movable:true,voicings:[{label:'6543 R-b3-5-7 · ex Am(Δ)@5fr',str:[5,3,2,1,-1,-1],deg:['R','b3','5','7',null,null],sf:1}]},
+  // Dom7#5 (augmented dominant): E3=G(R), A6=D#(#5): 51, D3=F(b7): 53, G4=B(3): 59
+  {id:'dom7s5',name:'Dom 7#5',sym:'7#5',cat:'ext',movable:true,voicings:[{label:'6543 R-#5-b7-3 · ex G7#5@3fr',str:[3,6,3,4,-1,-1],deg:['R','#5','b7','3',null,null],sf:3}]},
+  // Dom7b5 (tritone colour): E3=G(R), A2=B(3): 47, D3=F(b7): 53, G6=Db(b5): 61
+  {id:'dom7b5',name:'Dom 7b5',sym:'7b5',cat:'ext',movable:true,voicings:[{label:'6543 R-3-b7-b5 · ex G7b5@2fr',str:[3,2,3,6,-1,-1],deg:['R','3','b7','b5',null,null],sf:2}]},
+  // Minor 11 (modal): E3=G(R), A1=Bb(b3): 46, D3=F(b7): 53, G5=C(11): 60
+  {id:'min11',name:'Minor 11',sym:'m11',cat:'ext',movable:true,voicings:[{label:'6543 R-b3-b7-11 · ex Gm11@1fr',str:[3,1,3,5,-1,-1],deg:['R','b3','b7','11',null,null],sf:1}]},
+  // Maj13: E3=G(R), A2=B(3): 47, D4=F#(7): 54, B5=E(13): 64 [13th of G=E]
+  {id:'maj13',name:'Major 13',sym:'maj13',cat:'ext',movable:true,voicings:[{label:'6-5-4-2 R-3-7-13 · ex Gmaj13@2fr',str:[3,2,4,-1,5,-1],deg:['R','3','7',null,'13',null],sf:2}]},
+  // ── ALTERED additions ──────────────────────────────────────────────────
+  // 7alt (R-b7-#9-b13): fully altered dominant on 6-4-3-2
+  // E3=G(R), D3=F(b7): 53, G3=Bb(#9): 58, B4=Eb(b13): 63 [b13 of G=Eb]
+  {id:'dom7alt',name:'Dom 7alt',sym:'7alt',cat:'altered',movable:true,voicings:[{label:'6-4-3-2 R-b7-#9-b13 · ex G7alt@3fr',str:[3,-1,3,3,4,-1],deg:['R',null,'b7','#9','b13',null],sf:3}]},
+  // 7#9#5 (super-altered): E3=G(R), A6=D#(#5): 51, D3=F(b7): 53, G3=Bb(#9): 58
+  {id:'dom7s9s5',name:'Dom 7#9#5',sym:'7#9#5',cat:'altered',movable:true,voicings:[{label:'6543 R-#5-b7-#9 · ex G7#9#5@3fr',str:[3,6,3,3,-1,-1],deg:['R','#5','b7','#9',null,null],sf:3}]},
+  // 7b9b13: E3=G(R), D3=F(b7): 53, G1=Ab(b9): 56, B4=Eb(b13): 63
+  {id:'dom7b9b13',name:'Dom 7b9b13',sym:'7b9b13',cat:'altered',movable:true,voicings:[{label:'6-4-3-2 R-b7-b9-b13 · ex G7b9b13@1fr',str:[3,-1,3,1,4,-1],deg:['R',null,'b7','b9','b13',null],sf:1}]},
 ];
 
 const PROGS=[
