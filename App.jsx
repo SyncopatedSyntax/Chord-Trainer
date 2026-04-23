@@ -592,6 +592,21 @@ let _ctx=null,_unlocked=false;
 function getCtx(){if(!_ctx)_ctx=new(window.AudioContext||window.webkitAudioContext)();if(_ctx.state==='suspended')_ctx.resume();return _ctx;}
 function unlockAudio(){
   if(_unlocked)return;
+  // ── iOS silent switch fix ─────────────────────────────────────────────
+  // Web Audio alone respects the iOS hardware mute switch (ambient session).
+  // Playing a real <audio> element — even a silent one — promotes the iOS
+  // audio session to "playback" category, which bypasses the silent switch.
+  // Web Audio then inherits that session and plays through regardless of mute.
+  try{
+    // Inline silent MP3 (44-byte minimal valid MP3 frame, base64 encoded)
+    const SILENT_MP3='data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAFhpbmcAAAAPAAAAAwAAA7AAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb////////////////////////////////////////////////////////////////AAAA8ExBTUUzLjk5LjVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=';
+    const audio=new Audio(SILENT_MP3);
+    audio.volume=0.001;
+    // Must be triggered from a user gesture — this function is called from PlayButtons onClick
+    const p=audio.play();
+    if(p&&p.then)p.then(()=>{}).catch(()=>{});
+  }catch(e){}
+  // Also unlock Web Audio context
   const ctx=getCtx();
   const buf=ctx.createBuffer(1,1,22050);const src=ctx.createBufferSource();
   src.buffer=buf;src.connect(ctx.destination);src.start(0);
