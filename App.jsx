@@ -1270,8 +1270,10 @@ function ProgressionsTab({showDeg}){
 // Automatically enables Scale Degrees while open and restores prior state.
 function ChordDetail({chord,onBack,showDeg,setShowDeg,mastered,onToggleMastered}){
   const[transRoot,setTransRoot]=useState(null);
+  // Local state so the button reflects instantly — parent's mastered prop may
+  // not propagate if ChordDetail is inside a memo'd component (ChordsOfDay).
+  const[localMastered,setLocalMastered]=useState(()=>!!(mastered&&chord&&mastered.has(chord.id)));
 
-  // Auto-enable degrees on open, restore on close
   useEffect(()=>{
     const prev=showDeg;
     setShowDeg(true);
@@ -1281,27 +1283,32 @@ function ChordDetail({chord,onBack,showDeg,setShowDeg,mastered,onToggleMastered}
 
   if(!chord)return null;
   const ci=CATS[chord.cat];
-  const isMastered=mastered&&mastered.has(chord.id);
   const canMaster=!!onToggleMastered&&chord.id&&!chord.id.startsWith('prog_');
   const currentRoot=getRootNote(chord.voicings[0]);
   const canTranspose=chord.movable&&currentRoot!==null&&chord.voicings[0].deg.some((d,i)=>d==='R'&&chord.voicings[0].str[i]>0);
   const displayVoicings=transRoot===null?chord.voicings:chord.voicings.map(v=>transposeVoicing(v,transRoot));
   const uniqueDegs=[...new Set(displayVoicings[0].deg?.filter(Boolean)||[])];
 
+  const handleToggle=()=>{
+    const next=!localMastered;
+    setLocalMastered(next); // instant UI update
+    onToggleMastered(chord.id); // async persist to App state + storage
+  };
+
   return(
     <div style={{padding:'14px',maxWidth:'560px',margin:'0 auto'}}>
       <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'12px'}}>
         <button onClick={onBack} style={{background:'transparent',border:'1px solid #2a2840',color:'#aaa',padding:'5px 14px',borderRadius:'8px',cursor:'pointer',fontSize:'12px',touchAction:'manipulation'}}>← Back</button>
         {canMaster&&(
-          <button onClick={()=>onToggleMastered(chord.id)}
+          <button onClick={handleToggle}
             style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'5px',
-              background:isMastered?'#ffd93d22':'transparent',
-              border:`1px solid ${isMastered?'#ffd93d':'#2a2840'}`,
-              color:isMastered?'#ffd93d':'#666',
+              background:localMastered?'#ffd93d22':'transparent',
+              border:`1px solid ${localMastered?'#ffd93d':'#2a2840'}`,
+              color:localMastered?'#ffd93d':'#666',
               padding:'5px 12px',borderRadius:'8px',cursor:'pointer',fontSize:'11px',fontWeight:700,
-              transition:'background .2s,color .2s,border-color .2s',touchAction:'manipulation'}}>
-            <span style={{fontSize:'14px'}}>{isMastered?'★':'☆'}</span>
-            {isMastered?'Mastered':'Mark Mastered'}
+              transition:'background .2s,color .2s,border-color .2s',touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
+            <span style={{fontSize:'14px'}}>{localMastered?'★':'☆'}</span>
+            {localMastered?'Mastered':'Mark Mastered'}
           </button>
         )}
       </div>
