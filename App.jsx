@@ -78,6 +78,32 @@ const CHORDS=[
   {id:'tdim_gbe',name:'Diminished',sym:'dim',cat:'triad',movable:true,voicings:[{label:'G-B-e R-b3-b5',str:[-1,-1,-1,4,3,1],deg:[null,null,null,'R','b3','b5'],sf:1}]},
   {id:'tsus2_gbe',name:'Sus2',sym:'sus2',cat:'triad',movable:true,voicings:[{label:'G-B-e R-2-5',str:[-1,-1,-1,5,3,3],deg:[null,null,null,'R','2','5'],sf:3}]},
   {id:'tsus4_gbe',name:'Sus4',sym:'sus4',cat:'triad',movable:true,voicings:[{label:'G-B-e R-4-5',str:[-1,-1,-1,5,6,3],deg:[null,null,null,'R','4','5'],sf:3}]},
+  // ── E-A-D string set (str indices 0-1-2) ─────────────────────────────────
+  // Pitches: E2=40  A2=45  D3=50. All movable — no open strings.
+  // ex A root: E fret5=45=A(R), A fret4=49=C#(3), D fret2=52=E(5)
+  {id:'tMr_ead',  name:'Major root pos', sym:'maj',   cat:'triad',movable:true,voicings:[{label:'E-A-D R-3-5 · ex A@5fr',    str:[5,4,2,-1,-1,-1],deg:['R','3','5',null,null,null],    sf:2}]},
+  {id:'tM1_ead',  name:'Major 1st inv',  sym:'maj/3', cat:'triad',movable:true,voicings:[{label:'E-A-D 3-5-R · ex Gmaj/B@5fr', str:[7,5,5,-1,-1,-1],deg:['3','5','R',null,null,null],    sf:5}]},
+  {id:'tM2_ead',  name:'Major 2nd inv',  sym:'maj/5', cat:'triad',movable:true,voicings:[{label:'E-A-D 5-R-3 · ex Cmaj/G@2fr', str:[3,3,2,-1,-1,-1],deg:['5','R','3',null,null,null],    sf:2}]},
+  {id:'tmr_ead',  name:'Minor root pos', sym:'min',   cat:'triad',movable:true,voicings:[{label:'E-A-D R-b3-5 · ex Am@5fr',   str:[5,3,2,-1,-1,-1],deg:['R','b3','5',null,null,null],   sf:2}]},
+  {id:'tm1_ead',  name:'Minor 1st inv',  sym:'min/b3',cat:'triad',movable:true,voicings:[{label:'E-A-D b3-5-R · ex Gm/Bb@5fr', str:[6,5,5,-1,-1,-1],deg:['b3','5','R',null,null,null],   sf:5}]},
+  {id:'tm2_ead',  name:'Minor 2nd inv',  sym:'min/5', cat:'triad',movable:true,voicings:[{label:'E-A-D 5-R-b3 · ex Cm/G@1fr',  str:[3,3,1,-1,-1,-1],deg:['5','R','b3',null,null,null],   sf:1}]},
+  {id:'taug_ead', name:'Augmented',      sym:'aug',   cat:'triad',movable:true,voicings:[{label:'E-A-D R-3-#5 · ex A+@5fr',    str:[5,4,3,-1,-1,-1],deg:['R','3','#5',null,null,null],   sf:3}]},
+  {id:'tdim_ead', name:'Diminished',     sym:'dim',   cat:'triad',movable:true,voicings:[{label:'E-A-D R-b3-b5 · ex A°@5fr',   str:[5,3,1,-1,-1,-1],deg:['R','b3','b5',null,null,null],  sf:1}]},
+  {id:'tsus2_ead',name:'Sus2',           sym:'sus2',  cat:'triad',movable:true,voicings:[{label:'E-A-D R-2-5 · ex Asus2@5fr',  str:[5,2,2,-1,-1,-1],deg:['R','2','5',null,null,null],    sf:2}]},
+  {id:'tsus4_ead',name:'Sus4',           sym:'sus4',  cat:'triad',movable:true,voicings:[{label:'E-A-D R-4-5 · ex Asus4@5fr',  str:[5,5,2,-1,-1,-1],deg:['R','4','5',null,null,null],    sf:2}]},
+  // ── A-D-G string set (str indices 1-2-3) ─────────────────────────────────
+  // Pitches: A2=45  D3=50  G3=55. All movable — no open strings.
+  // ex D root: A fret5=50=D(R), D fret4=54=F#(3), G fret2=57=A(5)
+  {id:'tMr_adg',  name:'Major root pos', sym:'maj',   cat:'triad',movable:true,voicings:[{label:'A-D-G R-3-5 · ex D@5fr',      str:[-1,5,4,2,-1,-1],deg:[null,'R','3','5',null,null],    sf:2}]},
+  {id:'tM1_adg',  name:'Major 1st inv',  sym:'maj/3', cat:'triad',movable:true,voicings:[{label:'A-D-G 3-5-R · ex Cmaj/E@5fr', str:[-1,7,5,5,-1,-1],deg:[null,'3','5','R',null,null],    sf:5}]},
+  {id:'tM2_adg',  name:'Major 2nd inv',  sym:'maj/5', cat:'triad',movable:true,voicings:[{label:'A-D-G 5-R-3 · ex Fmaj/C@2fr', str:[-1,3,3,2,-1,-1],deg:[null,'5','R','3',null,null],    sf:2}]},
+  {id:'tmr_adg',  name:'Minor root pos', sym:'min',   cat:'triad',movable:true,voicings:[{label:'A-D-G R-b3-5 · ex Dm@5fr',    str:[-1,5,3,2,-1,-1],deg:[null,'R','b3','5',null,null],   sf:2}]},
+  {id:'tm1_adg',  name:'Minor 1st inv',  sym:'min/b3',cat:'triad',movable:true,voicings:[{label:'A-D-G b3-5-R · ex Cm/Eb@5fr', str:[-1,6,5,5,-1,-1],deg:[null,'b3','5','R',null,null],   sf:5}]},
+  {id:'tm2_adg',  name:'Minor 2nd inv',  sym:'min/5', cat:'triad',movable:true,voicings:[{label:'A-D-G 5-R-b3 · ex Am/E@5fr',  str:[-1,7,7,5,-1,-1],deg:[null,'5','R','b3',null,null],   sf:5}]},
+  {id:'taug_adg', name:'Augmented',      sym:'aug',   cat:'triad',movable:true,voicings:[{label:'A-D-G R-3-#5 · ex D+@5fr',    str:[-1,5,4,3,-1,-1],deg:[null,'R','3','#5',null,null],   sf:3}]},
+  {id:'tdim_adg', name:'Diminished',     sym:'dim',   cat:'triad',movable:true,voicings:[{label:'A-D-G R-b3-b5 · ex D°@5fr',   str:[-1,5,3,1,-1,-1],deg:[null,'R','b3','b5',null,null],  sf:1}]},
+  {id:'tsus2_adg',name:'Sus2',           sym:'sus2',  cat:'triad',movable:true,voicings:[{label:'A-D-G R-2-5 · ex Dsus2@5fr',  str:[-1,5,2,2,-1,-1],deg:[null,'R','2','5',null,null],    sf:2}]},
+  {id:'tsus4_adg',name:'Sus4',           sym:'sus4',  cat:'triad',movable:true,voicings:[{label:'A-D-G R-4-5 · ex Dsus4@5fr',  str:[-1,5,5,2,-1,-1],deg:[null,'R','4','5',null,null],    sf:2}]},
   {id:'bEMaj',name:'Maj E-shape',sym:'maj',cat:'barre',movable:true,voicings:[{label:'6th-str root · ex A@5fr',str:[5,7,7,6,5,5],deg:['R','5','R','3','5','R'],sf:5}]},
   {id:'bEMin',name:'Min E-shape',sym:'min',cat:'barre',movable:true,voicings:[{label:'6th-str root · ex Am@5fr',str:[5,7,7,5,5,5],deg:['R','5','R','b3','5','R'],sf:5}]},
   {id:'bE7',name:'Dom7 E-shape',sym:'7',cat:'barre',movable:true,voicings:[{label:'6th-str root · ex A7@5fr',str:[5,7,5,6,5,5],deg:['R','5','b7','3','5','R'],sf:5}]},
@@ -94,8 +120,8 @@ const CHORDS=[
   {id:'shMaj7_5',name:'Maj7 Shell 5th',sym:'Δ',cat:'shell',movable:true,voicings:[{label:'5-4-3 R-3-7 · ex Cmaj7',str:[-1,3,2,4,-1,-1],deg:[null,'R','3','7',null,null],sf:1}]},
   {id:'shm7_6',name:'Min7 Shell 6th',sym:'m7',cat:'shell',movable:true,voicings:[{label:'6-4-3 R-b7-b3 · ex Am7',str:[5,-1,5,5,-1,-1],deg:['R',null,'b7','b3',null,null],sf:5}]},
   {id:'shm7_5',name:'Min7 Shell 5th',sym:'m7',cat:'shell',movable:true,voicings:[{label:'5-4-3 R-b3-b7 · ex Cm7',str:[-1,3,1,3,-1,-1],deg:[null,'R','b3','b7',null,null],sf:1}]},
-  {id:'shdim7',name:'Dim7 Shell',sym:'°7',cat:'shell',movable:true,voicings:[{label:'6-4-3 R-b5-bb7',str:[7,-1,3,1,-1,-1],deg:['R',null,'b5','bb7',null,null],sf:1}]},
-  {id:'shm7b5',name:'Half-dim Shell',sym:'ø',cat:'shell',movable:true,voicings:[{label:'6-4-3 R-b5-b7',str:[7,-1,3,2,-1,-1],deg:['R',null,'b5','b7',null,null],sf:1}]},
+  {id:'shdim7',   name:'Dim7 Shell',        sym:'°7', cat:'shell',movable:true,voicings:[{label:'5-4-3 R-b5-bb7 · ex Cdim7@2fr',str:[-1,3,4,2,-1,-1],deg:[null,'R','b5','bb7',null,null],sf:2}]},
+  {id:'shm7b5',   name:'Half-dim Shell',    sym:'ø',  cat:'shell',movable:true,voicings:[{label:'5-4-3 R-b5-b7 · ex Cø@3fr',  str:[-1,3,4,3,-1,-1],deg:[null,'R','b5','b7',null,null],sf:3}]},
   {id:'d2maj7_6',name:'Maj7 Drop2',sym:'Δ',cat:'drop2',movable:true,voicings:[{label:'6543 5-R-3-7',str:[3,3,2,4,-1,-1],deg:['5','R','3','7',null,null],sf:2}]},
   {id:'d2dom7_6',name:'Dom7 Drop2',sym:'7',cat:'drop2',movable:true,voicings:[{label:'6543 5-R-3-b7',str:[3,3,2,3,-1,-1],deg:['5','R','3','b7',null,null],sf:2}]},
   {id:'d2min7_6',name:'Min7 Drop2',sym:'m7',cat:'drop2',movable:true,voicings:[{label:'6543 5-R-b3-b7',str:[3,3,1,3,-1,-1],deg:['5','R','b3','b7',null,null],sf:1}]},
@@ -221,9 +247,9 @@ const CHORDS=[
   {id:'spDom7',    name:'Spread Dom7',    sym:'7',   cat:'spread',movable:true,voicings:[{label:'6-3-2-1 R-3-b7-3 · ex G7@3fr',    str:[3,-1,-1,4,6,7],  deg:['R',null,null,'3','b7','3'],  sf:3}]},
   {id:'spMin7',    name:'Spread Min7',    sym:'m7',  cat:'spread',movable:true,voicings:[{label:'6-3-2-1 R-b3-b7-b3 · ex Gm7@3fr', str:[3,-1,-1,3,6,6],  deg:['R',null,null,'b3','b7','b3'],sf:3}]},
   // Spread major triad: E3=G(R), D7=A(5): 57=A3=5th✓, e7=B(3): 71✓
-  {id:'spMaj',     name:'Spread Major',   sym:'maj', cat:'spread',movable:true,voicings:[{label:'6-4-1 R-5-3 · ex G@3fr',           str:[3,-1,7,-1,-1,7], deg:['R',null,'5',null,null,'3'],  sf:3}]},
+  {id:'spMaj',     name:'Spread Major',   sym:'maj', cat:'spread',movable:true,voicings:[{label:'6-3-1 R-3-R · ex G@3fr',           str:[3,-1,-1,4,-1,3], deg:['R',null,null,'3',null,'R'],  sf:3}]},
   // Spread 6/9 (classic open jazz colour): E3=G(R), D2=E(6): 52=E3=6th✓, G2=A(9): 57=A3=9th✓, e7=B(3): 71✓
-  {id:'sp69',      name:'Spread 6/9',     sym:'6/9', cat:'spread',movable:true,voicings:[{label:'6-4-3-1 R-6-9-3 · ex G6/9@2fr',   str:[3,-1,2,2,-1,7],  deg:['R',null,'6','9',null,'3'],   sf:2}]},
+  {id:'sp69',      name:'Spread 6/9',     sym:'6/9', cat:'spread',movable:true,voicings:[{label:'6-4-3 R-6-9 · ex G6/9@2fr',     str:[3,-1,2,2,-1,-1],  deg:['R',null,'6','9',null,null],   sf:2}]},
   // Spread min(Δ7): E3=G(R), G3=Bb(b3): 58✓, B7=F#(7): 66✓
   {id:'spMinMaj7', name:'Spread min(Δ7)', sym:'m(Δ)',cat:'spread',movable:true,voicings:[{label:'6-3-2 R-b3-7 · ex GmΔ7@3fr',       str:[3,-1,-1,3,7,-1], deg:['R',null,null,'b3','7',null],  sf:3}]},
   // Spread m7b5: E3=G(R), G3=Bb(b3): 58✓, B6=F(b7): 65✓
@@ -342,7 +368,24 @@ const CHORDS=[
   {id:'spDom9',   name:'Spread Dom9',       sym:'9',    cat:'spread',movable:true,voicings:[{label:'6-3-2 R-9-b7 · ex G9@2fr',str:[3,-1,-1,2,6,-1],deg:['R',null,null,'9','b7',null],sf:2}]},
   // Spread Maj6/9 (6-3-2): E3=G(R):43✓, G2=A(9):57✓, B5=E(6):64✓ (6th/13th of G=E✓)
   {id:'spMaj69',  name:'Spread 6/9',        sym:'6/9',  cat:'spread',movable:true,voicings:[{label:'6-3-2 R-9-6 · ex G6/9@2fr',str:[3,-1,-1,2,5,-1],deg:['R',null,null,'9','6',null],sf:2}]},
-];const PROGS=[
+
+  // ── DROP 2 INVERSIONS (6543 string set) ─────────────────────────────────
+  // 2nd inversion (root in bass, 5th voiced above):
+  // Gmaj7: E3=G(R:43✓), A5=D(5:50✓), D4=F#(7:54✓), G4=B(3:59✓)
+  {id:'d2maj7_6_2i',name:'Maj7 Drop2 2nd inv', sym:'Δ/R', cat:'drop2',movable:true,voicings:[{label:'6543 R-5-7-3 · ex Gmaj7@3fr',str:[3,5,4,4,-1,-1],deg:['R','5','7','3',null,null],sf:3}]},
+  // G7: E3=G(R:43✓), A5=D(5:50✓), D3=F(b7:53✓), G4=B(3:59✓)
+  {id:'d2dom7_6_2i',name:'Dom7 Drop2 2nd inv',  sym:'7/R', cat:'drop2',movable:true,voicings:[{label:'6543 R-5-b7-3 · ex G7@3fr',  str:[3,5,3,4,-1,-1],deg:['R','5','b7','3',null,null],sf:3}]},
+  // 3rd inversion (7th in bass — smooth resolution voice):
+  // CMaj7: E7=B(7:47✓), A7=E(3:52✓), D5=G(5:55✓), G5=C(R:60✓) — span=2
+  {id:'d2maj7_6_3i',name:'Maj7 Drop2 3rd inv',  sym:'Δ/7', cat:'drop2',movable:true,voicings:[{label:'6543 7-3-5-R · ex Cmaj7@5fr',str:[7,7,5,5,-1,-1],deg:['7','3','5','R',null,null],sf:5}]},
+  // C7: E6=Bb(b7:46✓), A7=E(3:52✓), D5=G(5:55✓), G5=C(R:60✓)
+  {id:'d2dom7_6_3i',name:'Dom7 Drop2 3rd inv',   sym:'7/b7',cat:'drop2',movable:true,voicings:[{label:'6543 b7-3-5-R · ex C7@5fr',  str:[6,7,5,5,-1,-1],deg:['b7','3','5','R',null,null],sf:5}]},
+  // Cm7: E6=Bb(b7:46✓), A6=Eb(b3:51✓), D5=G(5:55✓), G5=C(R:60✓) — span=1
+  {id:'d2min7_6_3i',name:'Min7 Drop2 3rd inv',   sym:'m7/b7',cat:'drop2',movable:true,voicings:[{label:'6543 b7-b3-5-R · ex Cm7@5fr',str:[6,6,5,5,-1,-1],deg:['b7','b3','5','R',null,null],sf:5}]},
+  // Cø: E6=Bb(b7:46✓), A6=Eb(b3:51✓), D4=Gb(b5:54✓), G5=C(R:60✓)
+  {id:'d2m7b5_6_3i',name:'m7b5 Drop2 3rd inv',   sym:'ø/b7',cat:'drop2',movable:true,voicings:[{label:'6543 b7-b3-b5-R · ex Cø@4fr',str:[6,6,4,5,-1,-1],deg:['b7','b3','b5','R',null,null],sf:4}]},
+];
+const PROGS=[
   {title:'ii–V–I · C major',feel:'Jazz',desc:'The cornerstone of jazz. Dm7 creates tension, G7 raises it, Cmaj7 resolves.',chords:[{sym:'Dm7',rn:'ii',v:{str:[-1,5,3,5,-1,-1],deg:[null,'R','b3','b7',null,null],sf:3}},{sym:'G7',rn:'V',v:{str:[3,-1,3,4,-1,-1],deg:['R',null,'b7','3',null,null],sf:1}},{sym:'Cmaj7',rn:'I',v:{str:[-1,3,2,4,-1,-1],deg:[null,'R','3','7',null,null],sf:1}}]},
   {title:'I–VI–ii–V · C major',feel:'Jazz',desc:'Classic turnaround — relative minor and subdominant before resolving.',chords:[{sym:'Cmaj7',rn:'I',v:{str:[-1,3,2,4,-1,-1],deg:[null,'R','3','7',null,null],sf:1}},{sym:'Am7',rn:'vi',v:{str:[5,-1,5,5,-1,-1],deg:['R',null,'b7','b3',null,null],sf:5}},{sym:'Dm7',rn:'ii',v:{str:[-1,5,3,5,-1,-1],deg:[null,'R','b3','b7',null,null],sf:3}},{sym:'G7',rn:'V',v:{str:[3,-1,3,4,-1,-1],deg:['R',null,'b7','3',null,null],sf:1}}]},
   {title:'12-Bar Blues · E',feel:'Blues',desc:'The foundation of blues, rock, and jazz. Three open dominant 7ths.',chords:[{sym:'E7',rn:'I7',v:{str:[0,2,0,1,0,0],deg:['R','5','b7','3','5','R'],sf:1}},{sym:'A7',rn:'IV7',v:{str:[-1,0,2,0,2,0],deg:[null,'R','5','b7','3','5'],sf:1}},{sym:'B7',rn:'V7',v:{str:[-1,2,1,2,0,2],deg:[null,'R','3','b7','R','5'],sf:1}}]},
@@ -540,11 +583,12 @@ function seededShuffle(arr,seed){
   return a;
 }
 
-function getDailyChords(srsData){
+function getDailyChords(srsData,mastered){
   const td=todayStr();
-  const seed=strHash(td); // same seed all day → same order on every reload
-  const due=CHORDS.filter(c=>srsData[c.id]?.nextDue<=td);
-  const fresh=CHORDS.filter(c=>!srsData[c.id]);
+  const seed=strHash(td);
+  // Exclude mastered chords from both due and fresh pools
+  const due=CHORDS.filter(c=>srsData[c.id]?.nextDue<=td&&!(mastered&&mastered.has(c.id)));
+  const fresh=CHORDS.filter(c=>!srsData[c.id]&&!(mastered&&mastered.has(c.id)));
   const seen=new Set();const result=[];
   for(const c of [...seededShuffle(due,seed),...seededShuffle(fresh,seed+1)]){
     if(!seen.has(c.id)){seen.add(c.id);result.push(c);}
@@ -1224,7 +1268,7 @@ function ProgressionsTab({showDeg}){
 // ── CHORD DETAIL ─────────────────────────────────────────────────────────
 // Standalone detail view — shared by Library and ChordsOfDay.
 // Automatically enables Scale Degrees while open and restores prior state.
-function ChordDetail({chord,onBack,showDeg,setShowDeg}){
+function ChordDetail({chord,onBack,showDeg,setShowDeg,mastered,onToggleMastered}){
   const[transRoot,setTransRoot]=useState(null);
 
   // Auto-enable degrees on open, restore on close
@@ -1237,6 +1281,8 @@ function ChordDetail({chord,onBack,showDeg,setShowDeg}){
 
   if(!chord)return null;
   const ci=CATS[chord.cat];
+  const isMastered=mastered&&mastered.has(chord.id);
+  const canMaster=!!onToggleMastered&&chord.id&&!chord.id.startsWith('prog_');
   const currentRoot=getRootNote(chord.voicings[0]);
   const canTranspose=chord.movable&&currentRoot!==null&&chord.voicings[0].deg.some((d,i)=>d==='R'&&chord.voicings[0].str[i]>0);
   const displayVoicings=transRoot===null?chord.voicings:chord.voicings.map(v=>transposeVoicing(v,transRoot));
@@ -1244,7 +1290,21 @@ function ChordDetail({chord,onBack,showDeg,setShowDeg}){
 
   return(
     <div style={{padding:'14px',maxWidth:'560px',margin:'0 auto'}}>
-      <button onClick={onBack} style={{background:'transparent',border:'1px solid #2a2840',color:'#aaa',padding:'5px 14px',borderRadius:'8px',cursor:'pointer',marginBottom:'12px',fontSize:'12px',touchAction:'manipulation'}}>← Back</button>
+      <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'12px'}}>
+        <button onClick={onBack} style={{background:'transparent',border:'1px solid #2a2840',color:'#aaa',padding:'5px 14px',borderRadius:'8px',cursor:'pointer',fontSize:'12px',touchAction:'manipulation'}}>← Back</button>
+        {canMaster&&(
+          <button onClick={()=>onToggleMastered(chord.id)}
+            style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'5px',
+              background:isMastered?'#ffd93d22':'transparent',
+              border:`1px solid ${isMastered?'#ffd93d':'#2a2840'}`,
+              color:isMastered?'#ffd93d':'#666',
+              padding:'5px 12px',borderRadius:'8px',cursor:'pointer',fontSize:'11px',fontWeight:700,
+              transition:'background .2s,color .2s,border-color .2s',touchAction:'manipulation'}}>
+            <span style={{fontSize:'14px'}}>{isMastered?'★':'☆'}</span>
+            {isMastered?'Mastered':'Mark Mastered'}
+          </button>
+        )}
+      </div>
       <div style={{textAlign:'center',marginBottom:'14px'}}>
         <span style={{fontSize:'10px',color:ci.color,fontWeight:700,letterSpacing:'3px',textTransform:'uppercase',background:ci.color+'18',padding:'3px 10px',borderRadius:'20px'}}>{ci.label}</span>
         <div style={{fontSize:'24px',fontWeight:900,margin:'8px 0 2px',color:'#fff'}}>{chord.name}</div>
@@ -1314,7 +1374,7 @@ function ChordDetail({chord,onBack,showDeg,setShowDeg}){
   );
 }
 
-function Library({showDeg,setShowDeg}){
+function Library({showDeg,setShowDeg,mastered,onToggleMastered}){
   const[cat,setCat]=useState('all');
   const[sel,setSel]=useState(null);
   const[transRoot,setTransRoot]=useState(null);
@@ -1362,7 +1422,7 @@ function Library({showDeg,setShowDeg}){
   const handleSel=id=>{setSel(id);setTransRoot(null);};
 
   if(chord){
-    return <ChordDetail chord={chord} onBack={()=>{setSel(null);setTransRoot(null);}} showDeg={showDeg} setShowDeg={setShowDeg}/>;
+    return <ChordDetail chord={chord} onBack={()=>{setSel(null);setTransRoot(null);}} showDeg={showDeg} setShowDeg={setShowDeg} mastered={mastered} onToggleMastered={onToggleMastered}/>;
   }
 
   // ── Helper: chord type strip (shared by both filter modes)
@@ -1568,10 +1628,12 @@ function Library({showDeg,setShowDeg}){
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(98px,1fr))',gap:'8px'}}>
           {list.map(chord=>{
             const ci=CATS[chord.cat];
+            const isMast=mastered&&mastered.has(chord.id);
             return(<div key={chord.id} onClick={()=>handleSel(chord.id)}
-              style={{background:'#13121f',borderRadius:'10px',padding:'8px 6px 6px',border:`1px solid ${ci.color}22`,cursor:'pointer',textAlign:'center',transition:'all .15s',display:'flex',flexDirection:'column',alignItems:'center'}}
-              onMouseEnter={e=>{e.currentTarget.style.borderColor=ci.color;e.currentTarget.style.transform='translateY(-2px)';}}
-              onMouseLeave={e=>{e.currentTarget.style.borderColor=`${ci.color}22`;e.currentTarget.style.transform='none';}}>
+              style={{background:'#13121f',borderRadius:'10px',padding:'8px 6px 6px',border:`1px solid ${isMast?'#ffd93d44':ci.color+'22'}`,cursor:'pointer',textAlign:'center',transition:'all .15s',display:'flex',flexDirection:'column',alignItems:'center',position:'relative'}}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor=isMast?'#ffd93d':ci.color;e.currentTarget.style.transform='translateY(-2px)';}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor=isMast?'#ffd93d44':`${ci.color}22`;e.currentTarget.style.transform='none';}}>
+              {isMast&&<span style={{position:'absolute',top:'3px',right:'5px',fontSize:'10px',color:'#ffd93d',lineHeight:1}}>★</span>}
               <ChordDiagram v={chord.voicings[0]} showDeg={showDeg} size={0.78}/>
               <div style={{fontSize:'13px',fontWeight:900,marginTop:'4px',color:'#fff'}}>{chord.sym}</div>
               <div style={{fontSize:'9px',color:ci.color,fontWeight:600,marginTop:'1px',lineHeight:'1.2'}}>{chord.name}</div>
@@ -1685,10 +1747,10 @@ function ProgressionOfDay({showDeg,setSelChord}){
   </div>);
 }
 
-const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkReviewed}){
+const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkReviewed,mastered,onToggleMastered}){
   // Snapshot both daily chords AND srs data at mount — display never changes
   // after first render, so App re-renders (from saveSrs/saveHist) can't cause glitches.
-  const[daily]=useState(()=>getDailyChords(srsData));
+  const[daily]=useState(()=>getDailyChords(srsData,mastered));
   const[srsSnap]=useState(()=>({...srsData}));
   const[reviewed,setReviewed]=useState(new Set());
   const[selChord,setSelChord]=useState(null);
@@ -1700,7 +1762,7 @@ const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkRe
 
   // When a chord detail is open, render it (ChordDetail handles auto-showDeg internally)
   if(selChord){
-    return <ChordDetail chord={selChord} onBack={()=>setSelChord(null)} showDeg={showDeg} setShowDeg={setShowDeg}/>;
+    return <ChordDetail chord={selChord} onBack={()=>setSelChord(null)} showDeg={showDeg} setShowDeg={setShowDeg} mastered={mastered} onToggleMastered={onToggleMastered}/>;
   }
 
   return(<div>
@@ -1758,9 +1820,8 @@ const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkRe
                       <div style={{fontSize:'8px',color:'#555',marginTop:'1px',minHeight:'11px'}}>
                         {srsEntry?`${srsEntry.reps} reps · next in ${srsEntry.interval}d`:'\u00a0'}
                       </div>
-                      <div style={{marginTop:'5px',display:'flex',alignItems:'center',gap:'5px'}}>
+                      <div style={{marginTop:'5px'}}>
                         <PlayButtons v={chord.voicings[0]} size="sm"/>
-                        <span style={{fontSize:'9px',color:'#333'}}>· tap to explore</span>
                       </div>
                     </div>
                   </div>
@@ -1977,6 +2038,7 @@ export default function App(){
   const[srs,setSrs]=useState({});
   const[hist,setHist]=useState([]);
   const[degHist,setDegHist]=useState([]);
+  const[mastered,setMastered]=useState(()=>new Set());
   const[loaded,setLoaded]=useState(false);
   const[showData,setShowData]=useState(false);
   const[importMsg,setImportMsg]=useState('');
@@ -1985,9 +2047,11 @@ export default function App(){
   const srsRef=useRef(srs);
   const histRef=useRef(hist);
   const degHistRef=useRef(degHist);
+  const masteredRef=useRef(mastered);
   srsRef.current=srs;
   histRef.current=hist;
   degHistRef.current=degHist;
+  masteredRef.current=mastered;
 
   // Inject global mobile CSS once at mount
   useEffect(()=>{
@@ -2147,9 +2211,11 @@ export default function App(){
         const s=await store.get('ct_srs');
         const h=await store.get('ct_hist');
         const d=await store.get('ct_degh');
+        const m=await store.get('ct_mastered');
         if(s)setSrs(JSON.parse(s.value));
         if(h)setHist(JSON.parse(h.value));
         if(d)setDegHist(JSON.parse(d.value));
+        if(m)setMastered(new Set(JSON.parse(m.value)));
       }catch(e){}
       setLoaded(true);
     })();
@@ -2158,7 +2224,14 @@ export default function App(){
   const saveSrs=async d=>{setSrs(d);try{await store.set('ct_srs',JSON.stringify(d));}catch(e){}};
   const saveHist=async d=>{setHist(d);try{await store.set('ct_hist',JSON.stringify(d));}catch(e){}};
   const saveDegHist=async d=>{setDegHist(d);try{await store.set('ct_degh',JSON.stringify(d));}catch(e){}};
+  const saveMastered=async s=>{setMastered(s);try{await store.set('ct_mastered',JSON.stringify([...s]));}catch(e){}};
 
+  const onToggleMastered=useCallback(async id=>{
+    const s=new Set(masteredRef.current);
+    if(s.has(id))s.delete(id);else s.add(id);
+    await saveMastered(s);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[]);
   const onChordQuizDone=useCallback(async results=>{
     const ns={...srsRef.current},nh=[...histRef.current],td=todayStr();
     for(const r of results){ns[r.id]=updateSRS(ns[r.id],r.correct);nh.push({id:r.id,correct:r.correct,date:td});}
@@ -2180,7 +2253,7 @@ export default function App(){
   },[]); // eslint-disable-line
 
   const exportData=()=>{
-    const json=JSON.stringify({srs,hist,degHist,v:2,exported:new Date().toISOString()},null,2);
+    const json=JSON.stringify({srs,hist,degHist,mastered:[...mastered],v:2,exported:new Date().toISOString()},null,2);
     const a=document.createElement('a');
     a.href='data:application/json;charset=utf-8,'+encodeURIComponent(json);
     a.download=`chordtrainer-${todayStr()}.json`;
@@ -2196,6 +2269,7 @@ export default function App(){
         if(data.srs)await saveSrs(data.srs);
         if(data.hist)await saveHist(data.hist);
         if(data.degHist)await saveDegHist(data.degHist);
+        if(data.mastered)await saveMastered(new Set(data.mastered));
         setImportMsg('✓ Imported!');setTimeout(()=>setImportMsg(''),3000);
       }catch(err){setImportMsg('✗ Invalid file');}
       e.target.value='';
@@ -2236,8 +2310,8 @@ export default function App(){
       </div>
       {/* Safe-area bottom padding + extra room for install banner */}
       <div style={{paddingBottom:'max(32px,env(safe-area-inset-bottom))'}}>
-        {tab==='daily'&&<ChordsOfDay srsData={srs} showDeg={showDeg} setShowDeg={setShowDeg} onMarkReviewed={onMarkReviewed}/>}
-        {tab==='library'&&<Library showDeg={showDeg} setShowDeg={setShowDeg}/>}
+        {tab==='daily'&&<ChordsOfDay srsData={srs} showDeg={showDeg} setShowDeg={setShowDeg} onMarkReviewed={onMarkReviewed} mastered={mastered} onToggleMastered={onToggleMastered}/>}
+        {tab==='library'&&<Library showDeg={showDeg} setShowDeg={setShowDeg} mastered={mastered} onToggleMastered={onToggleMastered}/>}
         {tab==='progs'&&<ProgressionsTab showDeg={showDeg}/>}
         {tab==='quiz'&&<QuizTab showDeg={showDeg} onChordQuizDone={onChordQuizDone} onDegDone={onDegDone}/>}
         {tab==='weak'&&<WeakTab history={hist} degHist={degHist} srs={srs} showDeg={showDeg} onComplete={onChordQuizDone}/>}
