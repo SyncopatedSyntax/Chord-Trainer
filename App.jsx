@@ -347,11 +347,13 @@ const CHORDS=[
 
   // ── SHELL additions ──────────────────────────────────────────────────────
   // Dom9 shell (R-b7-9): E3=G(R):43✓, D3=F(b7):53✓, G2=A(9):57✓ (9th of G=A✓)
-  {id:'shDom9_6', name:'Dom9 Shell 6th',   sym:'9',    cat:'shell',movable:true,voicings:[{label:'6-4-3 R-b7-9 · ex G9@2fr',str:[3,-1,3,2,-1,-1],deg:['R',null,'b7','9',null,null],sf:2}]},
+  {id:'shDom9_6', name:'Dom9 Shell 6th',   sym:'9',    cat:'shell',movable:true,voicings:[{label:'6-5-4-3 R-3-b7-9 · ex G9@2fr',  str:[3,2,3,2,-1,-1],deg:['R','3','b7','9',null,null],  sf:2}]},
   // 7#9 shell (R-b7-#9): E3=G(R):43✓, D3=F(b7):53✓, G3=Bb(#9):58✓ (#9 of G=A#=Bb✓)
-  {id:'sh7s9_6',  name:'7#9 Shell',        sym:'7#9',  cat:'shell',movable:true,voicings:[{label:'6-4-3 R-b7-#9 · ex G7#9@3fr',str:[3,-1,3,3,-1,-1],deg:['R',null,'b7','#9',null,null],sf:3}]},
+  // 7#9 shell must include major 3rd to distinguish from m7 (#9=b3 enharmonically).
+  // E3=G(R):43✓, A2=B(3):47✓, D3=F(b7):53✓, G3=Bb(#9):58✓ (A#/Bb = #9 of G)
+  {id:'sh7s9_6',  name:'7#9 Shell',        sym:'7#9',  cat:'shell',movable:true,voicings:[{label:'6-5-4-3 R-3-b7-#9 · ex G7#9@2fr',str:[3,2,3,3,-1,-1],deg:['R','3','b7','#9',null,null], sf:2}]},
   // min(Δ7) shell 5th str: A3=C(R):48✓, D1=Eb(b3):51✓, G4=B(7):59✓ (maj7 of C=B✓)
-  {id:'shMinMaj7_5b',name:'min(Δ7) Shell 5th',sym:'m(Δ)',cat:'shell',movable:true,voicings:[{label:'5-4-3 R-b3-7 · ex Cm(Δ)@1fr',str:[-1,3,1,4,-1,-1],deg:[null,'R','b3','7',null,null],sf:1}]},
+  // shMinMaj7_5b removed — was exact duplicate of shMinMaj7_5
 
   // ── DROP 3 completions (5-4-2-1) ─────────────────────────────────────────
   // m7b5 Drop3 5-4-2-1: A3=C(R):48✓, D4=F#(b5):54✓ (b5 of C=F#/Gb✓), B4=Eb(b3):63✓, e6=Bb(b7):70✓
@@ -990,29 +992,62 @@ const Q_SUFFIX={
   'm13':'m13','maj9s11':'maj9#11','9s11':'9#11','mMaj7':'(Δ7)',
 };
 const QTMPL={
-  'maj7':{str:[-1,3,2,4,-1,-1],deg:[null,'R','3','7',null,null],sf:1},
-  'm7':{str:[-1,3,1,3,-1,-1],deg:[null,'R','b3','b7',null,null],sf:1},
-  '7':{str:[-1,3,2,3,-1,-1],deg:[null,'R','3','b7',null,null],sf:1},
-  'maj':{str:[-1,3,5,5,5,3],deg:[null,'R','5','R','3','5'],sf:3},
-  'min':{str:[-1,3,5,5,4,3],deg:[null,'R','5','R','b3','5'],sf:3},
-  'm7b5':{str:[-1,3,4,3,-1,-1],deg:[null,'R','b5','b7',null,null],sf:3},
-  'dim7':{str:[-1,3,4,2,4,-1],deg:[null,'R','b5','bb7','b3',null],sf:2},
-  '7b9':{str:[-1,3,2,3,2,-1],deg:[null,'R','3','b7','b9',null],sf:2},
-  '9':{str:[-1,3,2,3,3,-1],deg:[null,'R','3','b7','9',null],sf:1},
-  'maj9':{str:[-1,3,2,4,3,-1],deg:[null,'R','3','7','9',null],sf:1},
-  'm9':{str:[-1,3,1,3,3,-1],deg:[null,'R','b3','b7','9',null],sf:1},
-  '7sus4':{str:[-1,3,3,3,-1,-1],deg:[null,'R','4','b7',null,null],sf:3},
-  '6':{str:[-1,3,2,2,3,-1],deg:[null,'R','3','6','9',null],sf:2},
-  'sus2':{str:[-1,3,5,5,3,3],deg:[null,'R','5','R','2','5'],sf:3},
-  'sus4':{str:[-1,3,5,5,6,3],deg:[null,'R','5','R','4','5'],sf:3},
-  'aug':{str:[-1,3,2,1,-1,-1],deg:[null,'R','3','#5',null,null],sf:1},
-  'm6':{str:[-1,3,1,2,-1,-1],deg:[null,'R','b3','6',null,null],sf:1},
-  '9sus4':{str:[-1,3,3,3,3,-1],deg:[null,'R','4','b7','9',null],sf:3},
-  'maj7s5':{str:[3,2,4,-1,4,-1],deg:['R','3','7',null,'#5',null],sf:2},
-  // min(Δ7) — minor triad + major 7th. A3=C(R), D1=Eb(b3):51✓, G4=B(7):59✓
-  'mMaj7':{str:[-1,3,1,4,-1,-1],deg:[null,'R','b3','7',null,null],sf:1},
+  // All templates rooted at C — A string fret 3 = MIDI 48 = C
+  // ── Seventh chords: shell / 4-string — the jazz comping vocabulary ──────
+  'maj7':   {str:[-1,3,2,4,-1,-1],deg:[null,'R','3','7',null,null],sf:1},
+  'm7':     {str:[-1,3,1,3,-1,-1],deg:[null,'R','b3','b7',null,null],sf:1},
+  '7':      {str:[-1,3,2,3,-1,-1],deg:[null,'R','3','b7',null,null],sf:1},
+  'm7b5':   {str:[-1,3,4,3,-1,-1],deg:[null,'R','b5','b7',null,null],sf:3},
+  'dim7':   {str:[-1,3,4,2,4,-1],deg:[null,'R','b5','bb7','b3',null],sf:2},
+  '7b9':    {str:[-1,3,2,3,2,-1],deg:[null,'R','3','b7','b9',null],sf:2},
+  '9':      {str:[-1,3,2,3,3,-1],deg:[null,'R','3','b7','9',null],sf:1},
+  'maj9':   {str:[-1,3,2,4,3,-1],deg:[null,'R','3','7','9',null],sf:1},
+  'm9':     {str:[-1,3,1,3,3,-1],deg:[null,'R','b3','b7','9',null],sf:1},
+  '7sus4':  {str:[-1,3,3,3,-1,-1],deg:[null,'R','4','b7',null,null],sf:3},
+  '6':      {str:[-1,3,2,2,3,-1],deg:[null,'R','3','6','9',null],sf:2},
+  'm6':     {str:[-1,3,1,2,-1,-1],deg:[null,'R','b3','6',null,null],sf:1},
+  '9sus4':  {str:[-1,3,3,3,3,-1],deg:[null,'R','4','b7','9',null],sf:3},
+  'aug':    {str:[-1,3,2,1,-1,-1],deg:[null,'R','3','#5',null,null],sf:1},
+  'maj7s5': {str:[3,2,4,-1,4,-1],deg:['R','3','7',null,'#5',null],sf:2},
+  'mMaj7':  {str:[-1,3,1,4,-1,-1],deg:[null,'R','b3','7',null,null],sf:1},
+  // ── Triads: COMPACT 4-string on 5-4-3-2 (no top-e barre) ───────────────
+  // These are the shapes advanced rock, soul, and fusion players use —
+  // not the full 6-string cowboy barre. Cleaner on-neck sound.
+  // C major: A3=C(R):48✓, D5=G(5):55✓, G5=C(R):60✓, B5=E(3):64✓
+  'maj':    {str:[-1,3,5,5,5,-1],deg:[null,'R','5','R','3',null],sf:3},
+  // C minor: A3=C(R):48✓, D5=G(5):55✓, G5=C(R):60✓, B4=Eb(b3):63✓
+  'min':    {str:[-1,3,5,5,4,-1],deg:[null,'R','5','R','b3',null],sf:3},
+  // C sus2: B3=D(2):62✓ (2nd of C=D✓)
+  'sus2':   {str:[-1,3,5,5,3,-1],deg:[null,'R','5','R','2',null],sf:3},
+  // C sus4: B6=F(4):65✓ (4th of C=F✓)
+  'sus4':   {str:[-1,3,5,5,6,-1],deg:[null,'R','5','R','4',null],sf:3},
 };
 const TMPL_ROOT=0;
+
+// ── COWBOY VOICING MAP ────────────────────────────────────────────────────
+// Precomputed at startup: maps `noteIndex_quality` → open/cowboy voicing.
+// Used when the user enables "Open Pos." mode in the Progressions tab.
+// Quality patterns tested against chord sym strings.
+const COWBOY_Q={
+  'maj': c=>/^[A-G][#b]?$/.test(c.sym),
+  'min': c=>/^[A-G][#b]?m$/.test(c.sym),
+  '7':   c=>/^[A-G][#b]?7$/.test(c.sym),
+  'sus2':c=>c.sym.endsWith('sus2'),
+  'sus4':c=>c.sym.endsWith('sus4'),
+  'maj7':c=>/^[A-G][#b]?maj7$/.test(c.sym),
+  'm7':  c=>/^[A-G][#b]?m7$/.test(c.sym),
+};
+const COWBOY_MAP=(()=>{
+  const map={};
+  Object.entries(COWBOY_Q).forEach(([q,test])=>{
+    CHORDS.filter(c=>c.cat==='cowboy'&&test(c)).forEach(c=>{
+      const root=getRootNote(c.voicings[0]);
+      if(root!==null&&!map[`${root}_${q}`])map[`${root}_${q}`]=c.voicings[0];
+    });
+  });
+  return map;
+})();
+
 function transposeFromTemplate(tmpl,targetNote){
   const shift=((targetNote-TMPL_ROOT)+12)%12;
   if(shift===0)return{...tmpl,label:''};
@@ -1026,9 +1061,14 @@ function getChordName(keyNote,rnStr,quality){
   const sfx=Q_SUFFIX[quality]!==undefined?Q_SUFFIX[quality]:quality;
   return NOTE_NAMES[noteIdx]+sfx;
 }
-function getVoicing(keyNote,rnStr,quality){
+function getVoicing(keyNote,rnStr,quality,useCowboy=false){
   const offset=RN_OFFSETS[rnStr]||0;
   const targetNote=(keyNote+offset+12)%12;
+  // Open-position mode: try cowboy lookup first
+  if(useCowboy){
+    const cv=COWBOY_MAP[`${targetNote}_${quality}`];
+    if(cv)return cv;
+  }
   const tmpl=QTMPL[quality];
   if(!tmpl)return null;
   return transposeFromTemplate(tmpl,targetNote);
@@ -1128,13 +1168,14 @@ function ProgressionsTab({showDeg}){
   const[broadCat,setBroadCat]=useState('all');
   const[search,setSearch]=useState('');
   const[sel,setSel]=useState(null);
+  const[showCowboy,setShowCowboy]=useState(false);
   const list=useMemo(()=>{
     let r=broadCat==='all'?PROGS_RN:PROGS_RN.filter(p=>(FEEL_TO_CAT[p.feel]||'Jazz')===broadCat);
     if(search.trim()){const q=search.toLowerCase();r=r.filter(p=>p.title.toLowerCase().includes(q)||p.feel.toLowerCase().includes(q)||p.chords.some(c=>c.rn.toLowerCase().includes(q)));}
     return r;
   },[broadCat,search]);
   const prog=sel!=null?PROGS_RN[sel]:null;
-  const getProgVoicings=useCallback(p=>p.chords.map(c=>({...c,name:getChordName(keyNote,c.rn,c.q),voicing:getVoicing(keyNote,c.rn,c.q)})),[keyNote]);
+  const getProgVoicings=useCallback(p=>p.chords.map(c=>({...c,name:getChordName(keyNote,c.rn,c.q),voicing:getVoicing(keyNote,c.rn,c.q,showCowboy)})),[keyNote,showCowboy]);
 
   if(prog){
     const slots=getProgVoicings(prog);
@@ -1158,12 +1199,18 @@ function ProgressionsTab({showDeg}){
           </div>
         </div>
         <div style={{marginBottom:'14px',background:'#13121f',borderRadius:'9px',padding:'8px 10px',border:'1px solid #2a2840'}}>
-          <div style={{fontSize:'10px',color:'#888',textTransform:'uppercase',letterSpacing:'2px',marginBottom:'6px'}}>Key: <span style={{color:'#ffd93d'}}>{NOTE_NAMES[keyNote]}</span></div>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'6px'}}>
+            <div style={{fontSize:'10px',color:'#888',textTransform:'uppercase',letterSpacing:'2px'}}>Key: <span style={{color:'#ffd93d'}}>{NOTE_NAMES[keyNote]}</span></div>
+            <button onClick={()=>setShowCowboy(p=>!p)} style={{fontSize:'10px',fontWeight:700,padding:'3px 10px',borderRadius:'8px',cursor:'pointer',touchAction:'manipulation',border:`1px solid ${showCowboy?'#74b9ff':'#2a2840'}`,background:showCowboy?'#74b9ff22':'transparent',color:showCowboy?'#74b9ff':'#555',transition:'all .15s'}}>
+              {showCowboy?'🎸 Open Pos.':'🎸 Open Pos.'}
+            </button>
+          </div>
           <div style={{display:'flex',flexWrap:'wrap',gap:'4px'}}>
             {NOTE_NAMES.map((n,i)=>(
               <button key={i} onClick={()=>setKeyNote(i)} style={{padding:'4px 8px',borderRadius:'7px',cursor:'pointer',fontSize:'12px',fontWeight:700,border:`1px solid ${i===keyNote?'#ffd93d':'#2a2840'}`,background:i===keyNote?'#ffd93d22':'transparent',color:i===keyNote?'#ffd93d':'#777',transition:'all .15s',minHeight:'30px'}}>{n}</button>
             ))}
           </div>
+          {showCowboy&&<div style={{fontSize:'10px',color:'#74b9ff',marginTop:'5px'}}>Using open/cowboy voicings where available</div>}
         </div>
         <div style={{display:'flex',gap:'8px',flexWrap:'wrap',justifyContent:'center',marginBottom:'14px'}}>
           {slots.map((s,i)=>(
@@ -1205,12 +1252,18 @@ function ProgressionsTab({showDeg}){
         <div style={{fontSize:'11px',color:'#999'}}>{PROGS_RN.length} progressions · all styles · transpose to any key</div>
       </div>
       <div style={{background:'#13121f',borderRadius:'9px',padding:'8px 10px',border:'1px solid #2a2840',marginBottom:'10px'}}>
-        <div style={{fontSize:'10px',color:'#888',textTransform:'uppercase',letterSpacing:'2px',marginBottom:'5px'}}>Key: <span style={{color:'#ffd93d',fontWeight:700}}>{NOTE_NAMES[keyNote]}</span></div>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'5px'}}>
+          <div style={{fontSize:'10px',color:'#888',textTransform:'uppercase',letterSpacing:'2px'}}>Key: <span style={{color:'#ffd93d',fontWeight:700}}>{NOTE_NAMES[keyNote]}</span></div>
+          <button onClick={()=>setShowCowboy(p=>!p)} style={{fontSize:'10px',fontWeight:700,padding:'3px 10px',borderRadius:'8px',cursor:'pointer',touchAction:'manipulation',border:`1px solid ${showCowboy?'#74b9ff':'#2a2840'}`,background:showCowboy?'#74b9ff22':'transparent',color:showCowboy?'#74b9ff':'#555',transition:'all .15s'}}>
+            🎸 Open Pos.
+          </button>
+        </div>
         <div style={{display:'flex',flexWrap:'wrap',gap:'3px'}}>
           {NOTE_NAMES.map((n,i)=>(
             <button key={i} onClick={()=>setKeyNote(i)} style={{padding:'4px 7px',borderRadius:'6px',cursor:'pointer',fontSize:'11px',fontWeight:700,border:`1px solid ${i===keyNote?'#ffd93d':'#2a2840'}`,background:i===keyNote?'#ffd93d22':'transparent',color:i===keyNote?'#ffd93d':'#666',transition:'all .15s',minHeight:'28px'}}>{n}</button>
           ))}
         </div>
+        {showCowboy&&<div style={{fontSize:'10px',color:'#74b9ff',marginTop:'5px'}}>Open/cowboy voicings where available</div>}
       </div>
       <div style={{position:'relative',marginBottom:'10px'}}>
         <input type="text" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search progressions…"
@@ -1299,18 +1352,6 @@ function ChordDetail({chord,onBack,showDeg,setShowDeg,mastered,onToggleMastered}
     <div style={{padding:'14px',maxWidth:'560px',margin:'0 auto'}}>
       <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'12px'}}>
         <button onClick={onBack} style={{background:'transparent',border:'1px solid #2a2840',color:'#aaa',padding:'5px 14px',borderRadius:'8px',cursor:'pointer',fontSize:'12px',touchAction:'manipulation'}}>← Back</button>
-        {canMaster&&(
-          <button onClick={handleToggle}
-            style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'5px',
-              background:localMastered?'#ffd93d22':'transparent',
-              border:`1px solid ${localMastered?'#ffd93d':'#2a2840'}`,
-              color:localMastered?'#ffd93d':'#666',
-              padding:'5px 12px',borderRadius:'8px',cursor:'pointer',fontSize:'11px',fontWeight:700,
-              transition:'background .2s,color .2s,border-color .2s',touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
-            <span style={{fontSize:'14px'}}>{localMastered?'★':'☆'}</span>
-            {localMastered?'Mastered':'Mark Mastered'}
-          </button>
-        )}
       </div>
       <div style={{textAlign:'center',marginBottom:'14px'}}>
         <span style={{fontSize:'10px',color:ci.color,fontWeight:700,letterSpacing:'3px',textTransform:'uppercase',background:ci.color+'18',padding:'3px 10px',borderRadius:'20px'}}>{ci.label}</span>
@@ -1354,7 +1395,23 @@ function ChordDetail({chord,onBack,showDeg,setShowDeg,mastered,onToggleMastered}
           <div key={i} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'8px'}}>
             <div style={{background:'#13121f',borderRadius:'12px',padding:'16px',border:`2px solid ${ci.color}44`}}><ChordDiagram v={v} showDeg={true} size={1.85}/></div>
             <div style={{fontSize:'10px',color:'#888',maxWidth:'160px',textAlign:'center'}}>{v.label}</div>
-            <PlayButtons v={v}/>
+            <div style={{display:'flex',gap:'6px',alignItems:'center',flexWrap:'wrap',justifyContent:'center'}}>
+              <PlayButtons v={v}/>
+              {canMaster&&(
+                <button onClick={handleToggle}
+                  style={{display:'flex',alignItems:'center',gap:'4px',
+                    background:localMastered?'#ffd93d22':'transparent',
+                    border:`1px solid ${localMastered?'#ffd93d':'#2a2840'}`,
+                    color:localMastered?'#ffd93d':'#666',
+                    padding:'7px 10px',borderRadius:'7px',cursor:'pointer',fontSize:'11px',fontWeight:700,
+                    minHeight:'38px',
+                    transition:'background .2s,color .2s,border-color .2s',
+                    touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
+                  <span style={{fontSize:'13px'}}>{localMastered?'★':'☆'}</span>
+                  {localMastered?'Mastered':'Master'}
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>
