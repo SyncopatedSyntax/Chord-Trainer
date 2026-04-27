@@ -1935,66 +1935,75 @@ function AudioHintBanner(){
   const[visible,setVisible]=useState(false);
 
   useEffect(()=>{
-    // Only relevant on iOS
     const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
     if(!isIOS)return;
-
-    // Check permanent dismiss
     try{if(localStorage.getItem('ct_audio_hint_forever')==='1')return;}catch(e){}
-
-    // Check launch-based suppress: hidden until ct_launches > suppressUntil
     try{
       const suppressUntil=parseInt(localStorage.getItem('ct_audio_hint_launch')||'0',10);
       const launches=parseInt(localStorage.getItem('ct_launches')||'0',10);
       if(suppressUntil>0&&launches<=suppressUntil)return;
     }catch(e){}
-
-    // Show on first play event
     const handler=()=>setVisible(true);
     window.addEventListener('ct_first_play',handler,{once:true});
     return()=>window.removeEventListener('ct_first_play',handler);
   },[]);
 
-  const dismissFor10=()=>{
+  const dismissFor10=e=>{
+    e.stopPropagation();
     setVisible(false);
     try{
       const launches=parseInt(localStorage.getItem('ct_launches')||'0',10);
       localStorage.setItem('ct_audio_hint_launch',String(launches+10));
-    }catch(e){}
+    }catch(e2){}
   };
-
-  const dismissForever=()=>{
+  const dismissForever=e=>{
+    e.stopPropagation();
     setVisible(false);
-    try{localStorage.setItem('ct_audio_hint_forever','1');}catch(e){}
+    try{localStorage.setItem('ct_audio_hint_forever','1');}catch(e2){}
   };
 
   if(!visible)return null;
-
   return(
     <div style={{
-      position:'fixed',bottom:0,left:0,right:0,zIndex:9998,
-      padding:'12px 16px',paddingBottom:'max(12px,env(safe-area-inset-bottom))',
-      background:'#1a1928',borderTop:'1px solid #2a2840',
-      boxShadow:'0 -8px 32px #00000066',
-      animation:'slideUp .3s ease',
+      position:'fixed',
+      bottom:'max(16px,env(safe-area-inset-bottom))',
+      left:'12px',right:'12px',
+      zIndex:9998,
+      background:'#242235',
+      borderRadius:'18px',
+      border:'1px solid #2a2840',
+      boxShadow:'0 8px 40px #000000aa',
+      padding:'14px 14px 12px',
+      animation:'floatUp .3s cubic-bezier(.34,1.56,.64,1)',
     }}>
-      <div style={{display:'flex',alignItems:'flex-start',gap:'10px',marginBottom:'10px'}}>
-        <div style={{fontSize:'22px',lineHeight:1,flexShrink:0,marginTop:'1px'}}>🔔</div>
-        <div style={{flex:1}}>
+      <style>{`@keyframes floatUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
+      <div style={{display:'flex',alignItems:'flex-start',gap:'10px',marginBottom:'12px'}}>
+        <div style={{fontSize:'22px',lineHeight:1,flexShrink:0}}>🔔</div>
+        <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:'13px',fontWeight:800,color:'#fff',marginBottom:'3px'}}>No sound?</div>
-          <div style={{fontSize:'12px',color:'#aaa',lineHeight:'1.5'}}>
-            Unmute your ringtone to hear chord audio.
-          </div>
+          <div style={{fontSize:'12px',color:'#aaa',lineHeight:'1.5'}}>Unmute your ringtone to hear chord audio.</div>
         </div>
-        <button onClick={dismissFor10} style={{background:'transparent',border:'none',color:'#444',fontSize:'22px',cursor:'pointer',padding:'0 2px',lineHeight:1,flexShrink:0,touchAction:'manipulation'}}>×</button>
+        <button
+          onTouchEnd={dismissFor10} onClick={dismissFor10}
+          style={{background:'transparent',border:'none',color:'#555',fontSize:'20px',cursor:'pointer',
+            padding:'0 4px',lineHeight:1,flexShrink:0,touchAction:'manipulation',
+            WebkitTapHighlightColor:'transparent',pointerEvents:'auto'}}>×</button>
       </div>
       <div style={{display:'flex',gap:'8px'}}>
-        <button onClick={dismissFor10}
-          style={{flex:1,background:'#ffd93d',color:'#111',border:'none',padding:'9px',borderRadius:'9px',fontSize:'12px',fontWeight:800,cursor:'pointer',touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
+        <button
+          onTouchEnd={dismissFor10} onClick={dismissFor10}
+          style={{flex:1,background:'#ffd93d',color:'#111',border:'none',
+            padding:'10px',borderRadius:'11px',fontSize:'13px',fontWeight:800,
+            cursor:'pointer',touchAction:'manipulation',WebkitTapHighlightColor:'transparent',
+            pointerEvents:'auto'}}>
           Got it
         </button>
-        <button onClick={dismissForever}
-          style={{flex:1,background:'transparent',color:'#666',border:'1px solid #2a2840',padding:'9px',borderRadius:'9px',fontSize:'12px',fontWeight:600,cursor:'pointer',touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
+        <button
+          onTouchEnd={dismissForever} onClick={dismissForever}
+          style={{flex:1,background:'transparent',color:'#666',border:'1px solid #2a2840',
+            padding:'10px',borderRadius:'11px',fontSize:'12px',fontWeight:600,
+            cursor:'pointer',touchAction:'manipulation',WebkitTapHighlightColor:'transparent',
+            pointerEvents:'auto'}}>
           Don't show again
         </button>
       </div>
@@ -2051,19 +2060,22 @@ function InstallBanner(){
 
   return(
     <div style={{
-      position:'fixed',bottom:0,left:0,right:0,zIndex:9999,
-      padding:'12px 16px',paddingBottom:'max(12px,env(safe-area-inset-bottom))',
-      background:'#1a1928',borderTop:'1px solid #2a2840',
-      boxShadow:'0 -8px 32px #00000066',
-      display:'flex',flexDirection:'column',gap:'10px',
-      animation:'slideUp .3s ease',
+      position:'fixed',
+      bottom:'max(16px,env(safe-area-inset-bottom))',
+      left:'12px',right:'12px',
+      zIndex:9999,
+      background:'#242235',
+      borderRadius:'18px',
+      border:'1px solid #2a2840',
+      boxShadow:'0 8px 40px #000000aa',
+      padding:'14px 14px 12px',
+      animation:'floatUp .3s cubic-bezier(.34,1.56,.64,1)',
     }}>
-      <style>{`@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}`}</style>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px',marginBottom:!isIOS?'10px':'0'}}>
         <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-          <div style={{fontSize:'26px',lineHeight:1,flexShrink:0}}>🎸</div>
+          <div style={{fontSize:'24px',lineHeight:1,flexShrink:0}}>🎸</div>
           <div>
-            <div style={{fontSize:'13px',fontWeight:800,color:'#fff',marginBottom:'1px'}}>
+            <div style={{fontSize:'13px',fontWeight:800,color:'#fff',marginBottom:'2px'}}>
               {isIOS?'Get the full experience — add to Home Screen':'Practice anytime — install ChordTrainer'}
             </div>
             <div style={{fontSize:'11px',color:'#888'}}>
@@ -2073,10 +2085,19 @@ function InstallBanner(){
             </div>
           </div>
         </div>
-        <button onClick={dismiss} style={{background:'transparent',border:'none',color:'#444',fontSize:'22px',cursor:'pointer',padding:'0 2px',lineHeight:1,flexShrink:0,touchAction:'manipulation'}}>×</button>
+        <button
+          onTouchEnd={e=>{e.stopPropagation();dismiss();}} onClick={e=>{e.stopPropagation();dismiss();}}
+          style={{background:'transparent',border:'none',color:'#555',fontSize:'20px',cursor:'pointer',
+            padding:'0 4px',lineHeight:1,flexShrink:0,touchAction:'manipulation',
+            WebkitTapHighlightColor:'transparent',pointerEvents:'auto'}}>×</button>
       </div>
       {!isIOS&&(
-        <button onClick={installAndroid} style={{background:'#ffd93d',color:'#111',border:'none',padding:'10px',borderRadius:'10px',fontSize:'13px',fontWeight:800,cursor:'pointer',touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
+        <button
+          onTouchEnd={e=>{e.stopPropagation();installAndroid();}} onClick={e=>{e.stopPropagation();installAndroid();}}
+          style={{display:'block',width:'100%',background:'#ffd93d',color:'#111',border:'none',
+            padding:'10px',borderRadius:'11px',fontSize:'13px',fontWeight:800,
+            cursor:'pointer',touchAction:'manipulation',WebkitTapHighlightColor:'transparent',
+            pointerEvents:'auto'}}>
           Install
         </button>
       )}
