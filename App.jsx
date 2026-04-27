@@ -667,8 +667,13 @@ function pluckNote(ctx,freq,when,vol=0.16){
   });
 }
 function midiToHz(m){return 440*Math.pow(2,(m-69)/12);}
+let _firstPlayFired=false;
 function playVoicing(v,mode){
   unlockAudio();
+  if(!_firstPlayFired){
+    _firstPlayFired=true;
+    window.dispatchEvent(new CustomEvent('ct_first_play'));
+  }
   const ctx=getCtx(),now=ctx.currentTime+0.04;
   const notes=v.str.map((f,i)=>f>=0?midiToHz(OPEN_MIDI[i]+f):null).filter(Boolean);
   const gap=mode==='arp'?0.10:0.016;
@@ -1923,6 +1928,80 @@ const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkRe
 // ── INSTALL BANNER ────────────────────────────────────────────────────────
 // Shows a native-feeling bottom sheet prompting the user to add to home screen.
 // Hidden when: already running as standalone PWA, or not on a multiple-of-5 launch.
+// ── AUDIO HINT BANNER ────────────────────────────────────────────────────
+// iOS only. Shows on first play attempt when not suppressed.
+// Two dismiss modes: "Got it" (suppresses for 10 launches), "Don't show again" (forever).
+function AudioHintBanner(){
+  const[visible,setVisible]=useState(false);
+
+  useEffect(()=>{
+    // Only relevant on iOS
+    const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    if(!isIOS)return;
+
+    // Check permanent dismiss
+    try{if(localStorage.getItem('ct_audio_hint_forever')==='1')return;}catch(e){}
+
+    // Check launch-based suppress: hidden until ct_launches > suppressUntil
+    try{
+      const suppressUntil=parseInt(localStorage.getItem('ct_audio_hint_launch')||'0',10);
+      const launches=parseInt(localStorage.getItem('ct_launches')||'0',10);
+      if(suppressUntil>0&&launches<=suppressUntil)return;
+    }catch(e){}
+
+    // Show on first play event
+    const handler=()=>setVisible(true);
+    window.addEventListener('ct_first_play',handler,{once:true});
+    return()=>window.removeEventListener('ct_first_play',handler);
+  },[]);
+
+  const dismissFor10=()=>{
+    setVisible(false);
+    try{
+      const launches=parseInt(localStorage.getItem('ct_launches')||'0',10);
+      localStorage.setItem('ct_audio_hint_launch',String(launches+10));
+    }catch(e){}
+  };
+
+  const dismissForever=()=>{
+    setVisible(false);
+    try{localStorage.setItem('ct_audio_hint_forever','1');}catch(e){}
+  };
+
+  if(!visible)return null;
+
+  return(
+    <div style={{
+      position:'fixed',bottom:0,left:0,right:0,zIndex:9998,
+      padding:'12px 16px',paddingBottom:'max(12px,env(safe-area-inset-bottom))',
+      background:'#1a1928',borderTop:'1px solid #2a2840',
+      boxShadow:'0 -8px 32px #00000066',
+      animation:'slideUp .3s ease',
+    }}>
+      <div style={{display:'flex',alignItems:'flex-start',gap:'10px',marginBottom:'10px'}}>
+        <div style={{fontSize:'22px',lineHeight:1,flexShrink:0,marginTop:'1px'}}>🔔</div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:'13px',fontWeight:800,color:'#fff',marginBottom:'3px'}}>No sound?</div>
+          <div style={{fontSize:'12px',color:'#aaa',lineHeight:'1.5'}}>
+            Unmute your ringtone to hear chord audio.
+          </div>
+        </div>
+        <button onClick={dismissFor10} style={{background:'transparent',border:'none',color:'#444',fontSize:'22px',cursor:'pointer',padding:'0 2px',lineHeight:1,flexShrink:0,touchAction:'manipulation'}}>×</button>
+      </div>
+      <div style={{display:'flex',gap:'8px'}}>
+        <button onClick={dismissFor10}
+          style={{flex:1,background:'#ffd93d',color:'#111',border:'none',padding:'9px',borderRadius:'9px',fontSize:'12px',fontWeight:800,cursor:'pointer',touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
+          Got it
+        </button>
+        <button onClick={dismissForever}
+          style={{flex:1,background:'transparent',color:'#666',border:'1px solid #2a2840',padding:'9px',borderRadius:'9px',fontSize:'12px',fontWeight:600,cursor:'pointer',touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
+          Don't show again
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function InstallBanner(){
   const[visible,setVisible]=useState(false);
   const[deferredPrompt,setDeferredPrompt]=useState(null);
@@ -2382,6 +2461,7 @@ export default function App(){
         {tab==='help'&&<HelpTab/>}
       </div>
       <InstallBanner/>
+      <AudioHintBanner/>
     </div>
   );
 }
