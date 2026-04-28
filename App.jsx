@@ -1947,19 +1947,22 @@ function BannerStack(){
   const isStandalone=window.matchMedia('(display-mode: standalone)').matches||
     window.navigator.standalone===true;
 
+  // ── Increment launch counter unconditionally ──────────────────────────
+  // Must run before any early returns so standalone PWA users always
+  // have an up-to-date ct_launches value for suppression checks.
+  const[launches]=useState(()=>{
+    try{
+      const n=parseInt(localStorage.getItem('ct_launches')||'0',10)+1;
+      localStorage.setItem('ct_launches',String(n));
+      return n;
+    }catch(e){return 1;}
+  });
+
   // ── Install banner logic ──────────────────────────────────────────────
   useEffect(()=>{
-    if(isStandalone)return; // never show install prompt if already installed
-
-    let launches=1;
-    try{
-      launches=parseInt(localStorage.getItem('ct_launches')||'0',10)+1;
-      localStorage.setItem('ct_launches',String(launches));
-    }catch(e){}
+    if(isStandalone)return;
     if(launches!==1&&launches%5!==0)return;
-
     const isAndroidChrome=/android/i.test(navigator.userAgent)&&/chrome/i.test(navigator.userAgent);
-
     if(isIOS){
       const t=setTimeout(()=>setShowInstall(true),2500);
       return()=>clearTimeout(t);
@@ -1972,20 +1975,23 @@ function BannerStack(){
   },[]);
 
   // ── Audio hint logic ──────────────────────────────────────────────────
+  // Suppression check runs inside the handler (not at registration time)
+  // so that the listener is always registered and the check uses the
+  // freshly-incremented ct_launches value.
   useEffect(()=>{
     if(!isIOS)return;
-    // Check both suppress keys
-    try{
-      const sup10=parseInt(localStorage.getItem('ct_audio_hint_launch')||'0',10);
-      const sup20=parseInt(localStorage.getItem('ct_audio_hint_launch20')||'0',10);
-      const launches=parseInt(localStorage.getItem('ct_launches')||'0',10);
-      const maxSup=Math.max(sup10,sup20);
-      if(maxSup>0&&launches<=maxSup)return;
-    }catch(e){}
-    const handler=()=>setShowAudio(true);
+    const handler=()=>{
+      try{
+        const sup10=parseInt(localStorage.getItem('ct_audio_hint_launch')||'0',10);
+        const sup20=parseInt(localStorage.getItem('ct_audio_hint_launch20')||'0',10);
+        const maxSup=Math.max(sup10,sup20);
+        if(maxSup>0&&launches<=maxSup)return;
+      }catch(e){}
+      setShowAudio(true);
+    };
     window.addEventListener('ct_first_play',handler,{once:true});
     return()=>window.removeEventListener('ct_first_play',handler);
-  },[]);
+  },[launches]);
 
   // ── Button tap handler ───────────────────────────────────────────────
   // onPointerDown fires before any iOS gesture recognizer can claim the touch.
