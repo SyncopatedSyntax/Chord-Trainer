@@ -667,12 +667,16 @@ function pluckNote(ctx,freq,when,vol=0.16){
   });
 }
 function midiToHz(m){return 440*Math.pow(2,(m-69)/12);}
+// Module-level callback registry for first-play notification.
+// BannerStack registers a callback; playVoicing calls it once.
+// No DOM events, no timing issues, no Strict Mode double-fire problems.
+let _onFirstPlay=null;
 let _firstPlayFired=false;
 function playVoicing(v,mode){
   unlockAudio();
   if(!_firstPlayFired){
     _firstPlayFired=true;
-    window.dispatchEvent(new CustomEvent('ct_first_play'));
+    if(_onFirstPlay){_onFirstPlay();_onFirstPlay=null;}
   }
   const ctx=getCtx(),now=ctx.currentTime+0.04;
   const notes=v.str.map((f,i)=>f>=0?midiToHz(OPEN_MIDI[i]+f):null).filter(Boolean);
@@ -1975,22 +1979,29 @@ function BannerStack(){
   },[]);
 
   // ── Audio hint logic ──────────────────────────────────────────────────
-  // Suppression check runs inside the handler (not at registration time)
-  // so that the listener is always registered and the check uses the
-  // freshly-incremented ct_launches value.
+  // Register directly into the module-level _onFirstPlay slot.
+  // playVoicing calls it synchronously on the first play tap — no DOM
+  // events, no batching edge cases, no Strict Mode timing issues.
   useEffect(()=>{
     if(!isIOS)return;
-    const handler=()=>{
+    // If already fired before this component mounted, show immediately
+    if(_firstPlayFired){
       try{
         const sup10=parseInt(localStorage.getItem('ct_audio_hint_launch')||'0',10);
         const sup20=parseInt(localStorage.getItem('ct_audio_hint_launch20')||'0',10);
-        const maxSup=Math.max(sup10,sup20);
-        if(maxSup>0&&launches<=maxSup)return;
+        if(Math.max(sup10,sup20)<launches)setShowAudio(true);
+      }catch(e){setShowAudio(true);}
+      return;
+    }
+    _onFirstPlay=()=>{
+      try{
+        const sup10=parseInt(localStorage.getItem('ct_audio_hint_launch')||'0',10);
+        const sup20=parseInt(localStorage.getItem('ct_audio_hint_launch20')||'0',10);
+        if(Math.max(sup10,sup20)>=launches)return;
       }catch(e){}
       setShowAudio(true);
     };
-    window.addEventListener('ct_first_play',handler,{once:true});
-    return()=>window.removeEventListener('ct_first_play',handler);
+    return()=>{if(_onFirstPlay)_onFirstPlay=null;};
   },[launches]);
 
   // ── Button tap handler ───────────────────────────────────────────────
