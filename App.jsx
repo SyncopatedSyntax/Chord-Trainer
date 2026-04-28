@@ -1987,11 +1987,23 @@ function BannerStack(){
     return()=>window.removeEventListener('ct_first_play',handler);
   },[]);
 
-  // ── Button tap handler — works in browser AND standalone ─────────────
-  // In standalone PWA mode iOS can swallow click events on position:fixed
-  // elements near the bottom. Using onTouchEnd with preventDefault stops
-  // the system gesture recognizer from claiming the touch.
-  const tap=cb=>e=>{e.preventDefault();e.stopPropagation();cb();};
+  // ── Button tap handler ───────────────────────────────────────────────
+  // onPointerDown fires before any iOS gesture recognizer can claim the touch.
+  // We do NOT call preventDefault — it was preventing React from flushing
+  // state updates in standalone PWA mode. stopPropagation is enough to keep
+  // taps inside each card.
+  const tap=cb=>e=>{e.stopPropagation();cb();};
+
+  // Shared button style additions for reliable tapping
+  const tapBtn=(extra={})=>({
+    touchAction:'manipulation',
+    WebkitTapHighlightColor:'transparent',
+    pointerEvents:'auto',
+    cursor:'pointer',
+    position:'relative',
+    zIndex:1,
+    ...extra,
+  });
 
   // ── Install actions ───────────────────────────────────────────────────
   const dismissInstall=()=>setShowInstall(false);
@@ -2032,14 +2044,6 @@ function BannerStack(){
     animation:'floatUp .3s cubic-bezier(.34,1.56,.64,1)',
   };
   // Shared close × button style
-  const closeBtn={
-    background:'transparent',border:'none',color:'#555',fontSize:'20px',
-    cursor:'pointer',padding:'4px 6px',lineHeight:1,flexShrink:0,
-    touchAction:'manipulation',WebkitTapHighlightColor:'transparent',
-    pointerEvents:'auto',minWidth:'32px',minHeight:'32px',
-    display:'flex',alignItems:'center',justifyContent:'center',
-  };
-
   return(
     <div style={{
       position:'fixed',
@@ -2047,11 +2051,11 @@ function BannerStack(){
       left:'12px',right:'12px',
       zIndex:9999,
       display:'flex',flexDirection:'column',gap:'8px',
-      pointerEvents:'none', // let taps pass through the gap between cards
+      pointerEvents:'none',
     }}>
       <style>{`@keyframes floatUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
 
-      {/* Audio hint — renders second = stacks above install card */}
+      {/* Audio hint — stacks above install card */}
       {showAudio&&(
         <div style={{...card,pointerEvents:'auto'}}>
           <div style={{display:'flex',alignItems:'flex-start',gap:'10px',marginBottom:'12px'}}>
@@ -2060,26 +2064,34 @@ function BannerStack(){
               <div style={{fontSize:'13px',fontWeight:800,color:'#fff',marginBottom:'3px'}}>No sound?</div>
               <div style={{fontSize:'12px',color:'#aaa',lineHeight:'1.5'}}>Unmute your ringtone to hear chord audio.</div>
             </div>
-            <button style={closeBtn} onTouchEnd={tap(audioGotIt)} onClick={tap(audioGotIt)}>×</button>
+            <button
+              onPointerDown={tap(audioGotIt)} onClick={tap(audioGotIt)}
+              style={{background:'transparent',border:'none',color:'#555',fontSize:'20px',
+                padding:'4px 6px',lineHeight:1,flexShrink:0,cursor:'pointer',
+                touchAction:'manipulation',WebkitTapHighlightColor:'transparent',
+                pointerEvents:'auto',minWidth:'32px',minHeight:'44px',
+                display:'flex',alignItems:'center',justifyContent:'center',position:'relative',zIndex:1}}>×</button>
           </div>
           <div style={{display:'flex',gap:'8px'}}>
-            <button onTouchEnd={tap(audioGotIt)} onClick={tap(audioGotIt)}
+            <button onPointerDown={tap(audioGotIt)} onClick={tap(audioGotIt)}
               style={{flex:1,background:'#ffd93d',color:'#111',border:'none',padding:'10px',
-                borderRadius:'11px',fontSize:'13px',fontWeight:800,cursor:'pointer',
-                touchAction:'manipulation',WebkitTapHighlightColor:'transparent',pointerEvents:'auto'}}>
+                borderRadius:'11px',fontSize:'13px',fontWeight:800,cursor:'pointer',minHeight:'44px',
+                touchAction:'manipulation',WebkitTapHighlightColor:'transparent',
+                pointerEvents:'auto',position:'relative',zIndex:1}}>
               Got it
             </button>
-            <button onTouchEnd={tap(audioDontShow)} onClick={tap(audioDontShow)}
+            <button onPointerDown={tap(audioDontShow)} onClick={tap(audioDontShow)}
               style={{flex:1,background:'transparent',color:'#666',border:'1px solid #2a2840',
-                padding:'10px',borderRadius:'11px',fontSize:'12px',fontWeight:600,cursor:'pointer',
-                touchAction:'manipulation',WebkitTapHighlightColor:'transparent',pointerEvents:'auto'}}>
+                padding:'10px',borderRadius:'11px',fontSize:'12px',fontWeight:600,cursor:'pointer',minHeight:'44px',
+                touchAction:'manipulation',WebkitTapHighlightColor:'transparent',
+                pointerEvents:'auto',position:'relative',zIndex:1}}>
               Don't show again
             </button>
           </div>
         </div>
       )}
 
-      {/* Install prompt — renders first = sits at bottom */}
+      {/* Install prompt — sits at bottom */}
       {showInstall&&(
         <div style={{...card,pointerEvents:'auto'}}>
           <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:!isIOS?'10px':'0'}}>
@@ -2094,13 +2106,20 @@ function BannerStack(){
                   :'Full-screen, works offline, opens instantly'}
               </div>
             </div>
-            <button style={closeBtn} onTouchEnd={tap(dismissInstall)} onClick={tap(dismissInstall)}>×</button>
+            <button
+              onPointerDown={tap(dismissInstall)} onClick={tap(dismissInstall)}
+              style={{background:'transparent',border:'none',color:'#555',fontSize:'20px',
+                padding:'4px 6px',lineHeight:1,flexShrink:0,cursor:'pointer',
+                touchAction:'manipulation',WebkitTapHighlightColor:'transparent',
+                pointerEvents:'auto',minWidth:'32px',minHeight:'44px',
+                display:'flex',alignItems:'center',justifyContent:'center',position:'relative',zIndex:1}}>×</button>
           </div>
           {!isIOS&&(
-            <button onTouchEnd={tap(installAndroid)} onClick={tap(installAndroid)}
+            <button onPointerDown={tap(installAndroid)} onClick={tap(installAndroid)}
               style={{display:'block',width:'100%',background:'#ffd93d',color:'#111',border:'none',
-                padding:'10px',borderRadius:'11px',fontSize:'13px',fontWeight:800,cursor:'pointer',
-                touchAction:'manipulation',WebkitTapHighlightColor:'transparent',pointerEvents:'auto'}}>
+                padding:'10px',borderRadius:'11px',fontSize:'13px',fontWeight:800,cursor:'pointer',minHeight:'44px',
+                touchAction:'manipulation',WebkitTapHighlightColor:'transparent',
+                pointerEvents:'auto',position:'relative',zIndex:1}}>
               Install
             </button>
           )}
