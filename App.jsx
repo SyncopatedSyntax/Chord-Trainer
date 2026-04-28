@@ -1931,132 +1931,114 @@ const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkRe
 // ── AUDIO HINT BANNER ────────────────────────────────────────────────────
 // iOS only. Shows on first play attempt when not suppressed.
 // Two dismiss modes: "Got it" (suppresses for 10 launches), "Don't show again" (forever).
-function AudioHintBanner(){
-  const[visible,setVisible]=useState(false);
+// ── BANNER STACK ─────────────────────────────────────────────────────────
+// Renders both the install prompt and audio hint as floating cards in a
+// shared column-reverse container so they stack naturally without overlapping.
+// All button handlers use both onTouchEnd+onClick with preventDefault+stopPropagation
+// to fix standalone PWA mode on iOS where position:fixed touch events can be eaten
+// by the system gesture recognizer.
 
-  useEffect(()=>{
-    const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-    if(!isIOS)return;
-    try{if(localStorage.getItem('ct_audio_hint_forever')==='1')return;}catch(e){}
-    try{
-      const suppressUntil=parseInt(localStorage.getItem('ct_audio_hint_launch')||'0',10);
-      const launches=parseInt(localStorage.getItem('ct_launches')||'0',10);
-      if(suppressUntil>0&&launches<=suppressUntil)return;
-    }catch(e){}
-    const handler=()=>setVisible(true);
-    window.addEventListener('ct_first_play',handler,{once:true});
-    return()=>window.removeEventListener('ct_first_play',handler);
-  },[]);
-
-  const dismissFor10=e=>{
-    e.stopPropagation();
-    setVisible(false);
-    try{
-      const launches=parseInt(localStorage.getItem('ct_launches')||'0',10);
-      localStorage.setItem('ct_audio_hint_launch',String(launches+10));
-    }catch(e2){}
-  };
-  const dismissForever=e=>{
-    e.stopPropagation();
-    setVisible(false);
-    try{localStorage.setItem('ct_audio_hint_forever','1');}catch(e2){}
-  };
-
-  if(!visible)return null;
-  return(
-    <div style={{
-      position:'fixed',
-      bottom:'max(16px,env(safe-area-inset-bottom))',
-      left:'12px',right:'12px',
-      zIndex:9998,
-      background:'#242235',
-      borderRadius:'18px',
-      border:'1px solid #2a2840',
-      boxShadow:'0 8px 40px #000000aa',
-      padding:'14px 14px 12px',
-      animation:'floatUp .3s cubic-bezier(.34,1.56,.64,1)',
-    }}>
-      <style>{`@keyframes floatUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
-      <div style={{display:'flex',alignItems:'flex-start',gap:'10px',marginBottom:'12px'}}>
-        <div style={{fontSize:'22px',lineHeight:1,flexShrink:0}}>🔔</div>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:'13px',fontWeight:800,color:'#fff',marginBottom:'3px'}}>No sound?</div>
-          <div style={{fontSize:'12px',color:'#aaa',lineHeight:'1.5'}}>Unmute your ringtone to hear chord audio.</div>
-        </div>
-        <button
-          onTouchEnd={dismissFor10} onClick={dismissFor10}
-          style={{background:'transparent',border:'none',color:'#555',fontSize:'20px',cursor:'pointer',
-            padding:'0 4px',lineHeight:1,flexShrink:0,touchAction:'manipulation',
-            WebkitTapHighlightColor:'transparent',pointerEvents:'auto'}}>×</button>
-      </div>
-      <div style={{display:'flex',gap:'8px'}}>
-        <button
-          onTouchEnd={dismissFor10} onClick={dismissFor10}
-          style={{flex:1,background:'#ffd93d',color:'#111',border:'none',
-            padding:'10px',borderRadius:'11px',fontSize:'13px',fontWeight:800,
-            cursor:'pointer',touchAction:'manipulation',WebkitTapHighlightColor:'transparent',
-            pointerEvents:'auto'}}>
-          Got it
-        </button>
-        <button
-          onTouchEnd={dismissForever} onClick={dismissForever}
-          style={{flex:1,background:'transparent',color:'#666',border:'1px solid #2a2840',
-            padding:'10px',borderRadius:'11px',fontSize:'12px',fontWeight:600,
-            cursor:'pointer',touchAction:'manipulation',WebkitTapHighlightColor:'transparent',
-            pointerEvents:'auto'}}>
-          Don't show again
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function InstallBanner(){
-  const[visible,setVisible]=useState(false);
+function BannerStack(){
+  const[showInstall,setShowInstall]=useState(false);
+  const[showAudio,setShowAudio]=useState(false);
   const[deferredPrompt,setDeferredPrompt]=useState(null);
 
-  useEffect(()=>{
-    // Never show if already running as standalone PWA
-    const isStandalone=window.matchMedia('(display-mode: standalone)').matches||
-      window.navigator.standalone===true;
-    if(isStandalone)return;
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||
+    window.navigator.standalone===true;
 
-    // Increment launch counter on every page load, show on every 5th launch (1, 5, 10, 15…)
+  // ── Install banner logic ──────────────────────────────────────────────
+  useEffect(()=>{
+    if(isStandalone)return; // never show install prompt if already installed
+
     let launches=1;
     try{
       launches=parseInt(localStorage.getItem('ct_launches')||'0',10)+1;
       localStorage.setItem('ct_launches',String(launches));
     }catch(e){}
-    // Show on launch 1 and every 5th launch after that
     if(launches!==1&&launches%5!==0)return;
 
-    const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
     const isAndroidChrome=/android/i.test(navigator.userAgent)&&/chrome/i.test(navigator.userAgent);
 
     if(isIOS){
-      const t=setTimeout(()=>setVisible(true),2500);
+      const t=setTimeout(()=>setShowInstall(true),2500);
       return()=>clearTimeout(t);
     }
     if(isAndroidChrome){
-      const handler=e=>{e.preventDefault();setDeferredPrompt(e);setVisible(true);};
+      const handler=e=>{e.preventDefault();setDeferredPrompt(e);setShowInstall(true);};
       window.addEventListener('beforeinstallprompt',handler);
       return()=>window.removeEventListener('beforeinstallprompt',handler);
     }
   },[]);
 
-  // Dismiss hides the banner for this session only — launch counter keeps running
-  const dismiss=()=>setVisible(false);
+  // ── Audio hint logic ──────────────────────────────────────────────────
+  useEffect(()=>{
+    if(!isIOS)return;
+    // Check both suppress keys
+    try{
+      const sup10=parseInt(localStorage.getItem('ct_audio_hint_launch')||'0',10);
+      const sup20=parseInt(localStorage.getItem('ct_audio_hint_launch20')||'0',10);
+      const launches=parseInt(localStorage.getItem('ct_launches')||'0',10);
+      const maxSup=Math.max(sup10,sup20);
+      if(maxSup>0&&launches<=maxSup)return;
+    }catch(e){}
+    const handler=()=>setShowAudio(true);
+    window.addEventListener('ct_first_play',handler,{once:true});
+    return()=>window.removeEventListener('ct_first_play',handler);
+  },[]);
 
+  // ── Button tap handler — works in browser AND standalone ─────────────
+  // In standalone PWA mode iOS can swallow click events on position:fixed
+  // elements near the bottom. Using onTouchEnd with preventDefault stops
+  // the system gesture recognizer from claiming the touch.
+  const tap=cb=>e=>{e.preventDefault();e.stopPropagation();cb();};
+
+  // ── Install actions ───────────────────────────────────────────────────
+  const dismissInstall=()=>setShowInstall(false);
   const installAndroid=async()=>{
     if(!deferredPrompt)return;
     deferredPrompt.prompt();
-    const{outcome}=await deferredPrompt.userChoice;
+    await deferredPrompt.userChoice;
     setDeferredPrompt(null);
-    dismiss();
+    dismissInstall();
   };
 
-  if(!visible)return null;
-  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  // ── Audio actions ─────────────────────────────────────────────────────
+  const audioGotIt=()=>{
+    setShowAudio(false);
+    try{
+      const launches=parseInt(localStorage.getItem('ct_launches')||'0',10);
+      localStorage.setItem('ct_audio_hint_launch',String(launches+10));
+    }catch(e){}
+  };
+  const audioDontShow=()=>{
+    setShowAudio(false);
+    try{
+      const launches=parseInt(localStorage.getItem('ct_launches')||'0',10);
+      localStorage.setItem('ct_audio_hint_launch20',String(launches+20));
+    }catch(e){}
+  };
+
+  const hasAny=showInstall||showAudio;
+  if(!hasAny)return null;
+
+  // Shared card style
+  const card={
+    background:'#242235',
+    borderRadius:'18px',
+    border:'1px solid #2a2840',
+    boxShadow:'0 8px 40px #000000aa',
+    padding:'14px 14px 12px',
+    animation:'floatUp .3s cubic-bezier(.34,1.56,.64,1)',
+  };
+  // Shared close × button style
+  const closeBtn={
+    background:'transparent',border:'none',color:'#555',fontSize:'20px',
+    cursor:'pointer',padding:'4px 6px',lineHeight:1,flexShrink:0,
+    touchAction:'manipulation',WebkitTapHighlightColor:'transparent',
+    pointerEvents:'auto',minWidth:'32px',minHeight:'32px',
+    display:'flex',alignItems:'center',justifyContent:'center',
+  };
 
   return(
     <div style={{
@@ -2064,42 +2046,65 @@ function InstallBanner(){
       bottom:'max(16px,env(safe-area-inset-bottom))',
       left:'12px',right:'12px',
       zIndex:9999,
-      background:'#242235',
-      borderRadius:'18px',
-      border:'1px solid #2a2840',
-      boxShadow:'0 8px 40px #000000aa',
-      padding:'14px 14px 12px',
-      animation:'floatUp .3s cubic-bezier(.34,1.56,.64,1)',
+      display:'flex',flexDirection:'column',gap:'8px',
+      pointerEvents:'none', // let taps pass through the gap between cards
     }}>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px',marginBottom:!isIOS?'10px':'0'}}>
-        <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-          <div style={{fontSize:'24px',lineHeight:1,flexShrink:0}}>🎸</div>
-          <div>
-            <div style={{fontSize:'13px',fontWeight:800,color:'#fff',marginBottom:'2px'}}>
-              {isIOS?'Get the full experience — add to Home Screen':'Practice anytime — install ChordTrainer'}
+      <style>{`@keyframes floatUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
+
+      {/* Audio hint — renders second = stacks above install card */}
+      {showAudio&&(
+        <div style={{...card,pointerEvents:'auto'}}>
+          <div style={{display:'flex',alignItems:'flex-start',gap:'10px',marginBottom:'12px'}}>
+            <div style={{fontSize:'22px',lineHeight:1,flexShrink:0}}>🔔</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:'13px',fontWeight:800,color:'#fff',marginBottom:'3px'}}>No sound?</div>
+              <div style={{fontSize:'12px',color:'#aaa',lineHeight:'1.5'}}>Unmute your ringtone to hear chord audio.</div>
             </div>
-            <div style={{fontSize:'11px',color:'#888'}}>
-              {isIOS
-                ?<>Tap <span style={{color:'#ffd93d',fontWeight:700}}>Share ⎙</span> → <span style={{color:'#ffd93d',fontWeight:700}}>Add to Home Screen</span></>
-                :'Full-screen, works offline, opens instantly'}
-            </div>
+            <button style={closeBtn} onTouchEnd={tap(audioGotIt)} onClick={tap(audioGotIt)}>×</button>
+          </div>
+          <div style={{display:'flex',gap:'8px'}}>
+            <button onTouchEnd={tap(audioGotIt)} onClick={tap(audioGotIt)}
+              style={{flex:1,background:'#ffd93d',color:'#111',border:'none',padding:'10px',
+                borderRadius:'11px',fontSize:'13px',fontWeight:800,cursor:'pointer',
+                touchAction:'manipulation',WebkitTapHighlightColor:'transparent',pointerEvents:'auto'}}>
+              Got it
+            </button>
+            <button onTouchEnd={tap(audioDontShow)} onClick={tap(audioDontShow)}
+              style={{flex:1,background:'transparent',color:'#666',border:'1px solid #2a2840',
+                padding:'10px',borderRadius:'11px',fontSize:'12px',fontWeight:600,cursor:'pointer',
+                touchAction:'manipulation',WebkitTapHighlightColor:'transparent',pointerEvents:'auto'}}>
+              Don't show again
+            </button>
           </div>
         </div>
-        <button
-          onTouchEnd={e=>{e.stopPropagation();dismiss();}} onClick={e=>{e.stopPropagation();dismiss();}}
-          style={{background:'transparent',border:'none',color:'#555',fontSize:'20px',cursor:'pointer',
-            padding:'0 4px',lineHeight:1,flexShrink:0,touchAction:'manipulation',
-            WebkitTapHighlightColor:'transparent',pointerEvents:'auto'}}>×</button>
-      </div>
-      {!isIOS&&(
-        <button
-          onTouchEnd={e=>{e.stopPropagation();installAndroid();}} onClick={e=>{e.stopPropagation();installAndroid();}}
-          style={{display:'block',width:'100%',background:'#ffd93d',color:'#111',border:'none',
-            padding:'10px',borderRadius:'11px',fontSize:'13px',fontWeight:800,
-            cursor:'pointer',touchAction:'manipulation',WebkitTapHighlightColor:'transparent',
-            pointerEvents:'auto'}}>
-          Install
-        </button>
+      )}
+
+      {/* Install prompt — renders first = sits at bottom */}
+      {showInstall&&(
+        <div style={{...card,pointerEvents:'auto'}}>
+          <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:!isIOS?'10px':'0'}}>
+            <div style={{fontSize:'24px',lineHeight:1,flexShrink:0}}>🎸</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:'13px',fontWeight:800,color:'#fff',marginBottom:'2px'}}>
+                {isIOS?'Get the full experience — add to Home Screen':'Practice anytime — install ChordTrainer'}
+              </div>
+              <div style={{fontSize:'11px',color:'#888'}}>
+                {isIOS
+                  ?<>Tap <span style={{color:'#ffd93d',fontWeight:700}}>Share ⎙</span> → <span style={{color:'#ffd93d',fontWeight:700}}>Add to Home Screen</span></>
+                  :'Full-screen, works offline, opens instantly'}
+              </div>
+            </div>
+            <button style={closeBtn} onTouchEnd={tap(dismissInstall)} onClick={tap(dismissInstall)}>×</button>
+          </div>
+          {!isIOS&&(
+            <button onTouchEnd={tap(installAndroid)} onClick={tap(installAndroid)}
+              style={{display:'block',width:'100%',background:'#ffd93d',color:'#111',border:'none',
+                padding:'10px',borderRadius:'11px',fontSize:'13px',fontWeight:800,cursor:'pointer',
+                touchAction:'manipulation',WebkitTapHighlightColor:'transparent',pointerEvents:'auto'}}>
+              Install
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
@@ -2481,8 +2486,7 @@ export default function App(){
         {tab==='weak'&&<WeakTab history={hist} degHist={degHist} srs={srs} showDeg={showDeg} onComplete={onChordQuizDone}/>}
         {tab==='help'&&<HelpTab/>}
       </div>
-      <InstallBanner/>
-      <AudioHintBanner/>
+      <BannerStack/>
     </div>
   );
 }
