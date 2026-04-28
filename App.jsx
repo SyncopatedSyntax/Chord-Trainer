@@ -2023,7 +2023,7 @@ function BannerStack(){
   });
 
   // ── Install actions ───────────────────────────────────────────────────
-  const dismissInstall=()=>setShowInstall(false);
+  const dismissInstall=()=>setTimeout(()=>setShowInstall(false),0);
   const installAndroid=async()=>{
     if(!deferredPrompt)return;
     deferredPrompt.prompt();
@@ -2034,14 +2034,14 @@ function BannerStack(){
 
   // ── Audio actions ─────────────────────────────────────────────────────
   const audioGotIt=()=>{
-    setShowAudio(false);
+    setTimeout(()=>setShowAudio(false),0);
     try{
       const launches=parseInt(localStorage.getItem('ct_launches')||'0',10);
       localStorage.setItem('ct_audio_hint_launch',String(launches+10));
     }catch(e){}
   };
   const audioDontShow=()=>{
-    setShowAudio(false);
+    setTimeout(()=>setShowAudio(false),0);
     try{
       const launches=parseInt(localStorage.getItem('ct_launches')||'0',10);
       localStorage.setItem('ct_audio_hint_launch20',String(launches+20));
