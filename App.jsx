@@ -2498,7 +2498,45 @@ export default function App(){
       </div>
       {/* Safe-area bottom padding + extra room for install banner */}
       <div style={{paddingBottom:'max(32px,env(safe-area-inset-bottom))'}}>
-        {showAudioHint&&(
+      {/* ── DEBUG PANEL — remove this block when done ── */}
+      {(()=>{
+        const ls=k=>localStorage.getItem(k)||'(unset)';
+        const ss=k=>sessionStorage.getItem(k)||'(unset)';
+        const rows=[
+          ['ct_launches',ls('ct_launches')],
+          ['ct_audio_hint_launch',ls('ct_audio_hint_launch')],
+          ['ct_audio_hint_launch20',ls('ct_audio_hint_launch20')],
+          ['ct_launched (session)',ss('ct_launched')],
+          ['_firstPlayFired',String(_firstPlayFired)],
+          ['_onFirstPlay registered',String(!!_onFirstPlay)],
+          ['showAudioHint (state)',String(showAudioHint)],
+          ['isIOS',String(/iphone|ipad|ipod/i.test(navigator.userAgent))],
+          ['isStandalone',String(window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone===true)],
+        ];
+        return(
+          <div style={{margin:'8px 12px',background:'#0a0918',border:'1px solid #ff6b6b',borderRadius:'8px',padding:'8px 10px'}}>
+            <div style={{fontSize:'10px',color:'#ff6b6b',fontWeight:700,marginBottom:'5px',letterSpacing:'1px'}}>🐛 DEBUG — remove before release</div>
+            {rows.map(([k,v])=>(
+              <div key={k} style={{display:'flex',gap:'8px',fontSize:'10px',fontFamily:'monospace',marginBottom:'2px'}}>
+                <span style={{color:'#888',minWidth:'180px',flexShrink:0}}>{k}</span>
+                <span style={{color:'#ffd93d'}}>{v}</span>
+              </div>
+            ))}
+            <div style={{display:'flex',gap:'6px',marginTop:'7px',flexWrap:'wrap'}}>
+              <button onClick={()=>{localStorage.clear();sessionStorage.clear();location.reload();}}
+                style={{fontSize:'9px',color:'#ff6b6b',background:'transparent',border:'1px solid #ff6b6b33',borderRadius:'5px',padding:'3px 8px',cursor:'pointer'}}>
+                Clear all & reload
+              </button>
+              <button onClick={()=>setShowAudioHint(true)}
+                style={{fontSize:'9px',color:'#00b894',background:'transparent',border:'1px solid #00b89433',borderRadius:'5px',padding:'3px 8px',cursor:'pointer'}}>
+                Force show hint
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+      {/* ── END DEBUG PANEL ── */}
+      {showAudioHint&&(
           <AudioHintPanel
             onDismiss10={()=>{
               setShowAudioHint(false);
