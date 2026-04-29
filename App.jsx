@@ -1942,9 +1942,44 @@ const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkRe
 // to fix standalone PWA mode on iOS where position:fixed touch events can be eaten
 // by the system gesture recognizer.
 
+// ── AUDIO HINT PANEL ─────────────────────────────────────────────────────
+// Renders inline inside the normal React tree (not position:fixed).
+// Shown at the top of the Today tab content area — same approach as ChordDetail.
+function AudioHintPanel({onDismiss10,onDismiss20}){
+  return(
+    <div style={{margin:'12px 12px 0',background:'#13121f',borderRadius:'12px',border:'1px solid #2a2840',padding:'12px 14px',boxShadow:'0 2px 12px #00000066'}}>
+      <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'10px'}}>
+        <div style={{fontSize:'20px',lineHeight:1,flexShrink:0}}>🔔</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:'13px',fontWeight:800,color:'#fff',marginBottom:'2px'}}>No sound?</div>
+          <div style={{fontSize:'11px',color:'#888',lineHeight:'1.4'}}>Unmute your ringtone to hear chord audio.</div>
+        </div>
+        <button onClick={onDismiss10}
+          style={{background:'transparent',border:'none',color:'#555',fontSize:'22px',cursor:'pointer',
+            padding:'0 4px',lineHeight:1,minWidth:'36px',minHeight:'44px',flexShrink:0,
+            display:'flex',alignItems:'center',justifyContent:'center',
+            touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>×</button>
+      </div>
+      <div style={{display:'flex',gap:'8px'}}>
+        <button onClick={onDismiss10}
+          style={{flex:1,background:'#ffd93d',color:'#111',border:'none',padding:'10px',
+            borderRadius:'9px',fontSize:'13px',fontWeight:800,cursor:'pointer',minHeight:'44px',
+            touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
+          Got it
+        </button>
+        <button onClick={onDismiss20}
+          style={{flex:1,background:'transparent',color:'#666',border:'1px solid #2a2840',
+            padding:'10px',borderRadius:'9px',fontSize:'12px',fontWeight:600,cursor:'pointer',minHeight:'44px',
+            touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
+          Don't show again
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function BannerStack(){
   const[showInstall,setShowInstall]=useState(false);
-  const[showAudio,setShowAudio]=useState(false);
   const[deferredPrompt,setDeferredPrompt]=useState(null);
 
   const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -1978,31 +2013,7 @@ function BannerStack(){
     }
   },[]);
 
-  // ── Audio hint logic ──────────────────────────────────────────────────
-  // Register directly into the module-level _onFirstPlay slot.
-  // playVoicing calls it synchronously on the first play tap — no DOM
-  // events, no batching edge cases, no Strict Mode timing issues.
-  useEffect(()=>{
-    if(!isIOS)return;
-    // If already fired before this component mounted, show immediately
-    if(_firstPlayFired){
-      try{
-        const sup10=parseInt(localStorage.getItem('ct_audio_hint_launch')||'0',10);
-        const sup20=parseInt(localStorage.getItem('ct_audio_hint_launch20')||'0',10);
-        if(Math.max(sup10,sup20)<launches)setShowAudio(true);
-      }catch(e){setShowAudio(true);}
-      return;
-    }
-    _onFirstPlay=()=>{
-      try{
-        const sup10=parseInt(localStorage.getItem('ct_audio_hint_launch')||'0',10);
-        const sup20=parseInt(localStorage.getItem('ct_audio_hint_launch20')||'0',10);
-        if(Math.max(sup10,sup20)>=launches)return;
-      }catch(e){}
-      setShowAudio(true);
-    };
-    return()=>{if(_onFirstPlay)_onFirstPlay=null;};
-  },[launches]);
+
 
   // ── Button tap handler ───────────────────────────────────────────────
   // onPointerDown fires before any iOS gesture recognizer can claim the touch.
@@ -2033,23 +2044,9 @@ function BannerStack(){
   };
 
   // ── Audio actions ─────────────────────────────────────────────────────
-  const audioGotIt=()=>{
-    setTimeout(()=>setShowAudio(false),0);
-    try{
-      const launches=parseInt(localStorage.getItem('ct_launches')||'0',10);
-      localStorage.setItem('ct_audio_hint_launch',String(launches+10));
-    }catch(e){}
-  };
-  const audioDontShow=()=>{
-    setTimeout(()=>setShowAudio(false),0);
-    try{
-      const launches=parseInt(localStorage.getItem('ct_launches')||'0',10);
-      localStorage.setItem('ct_audio_hint_launch20',String(launches+20));
-    }catch(e){}
-  };
 
-  const hasAny=showInstall||showAudio;
-  if(!hasAny)return null;
+
+  if(!showInstall)return null;
 
   const sheetStyle={
     position:'fixed',
@@ -2072,33 +2069,6 @@ function BannerStack(){
 
   return(
     <>
-      {/* Audio hint — sits above install sheet when both visible */}
-      {showAudio&&(
-        <div style={{...sheetStyle,bottom:audioBottom,paddingBottom:audioBottom===0?'max(12px,env(safe-area-inset-bottom))':'12px'}}>
-          <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'10px'}}>
-            <div style={{fontSize:'20px',lineHeight:1,flexShrink:0}}>🔔</div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:'13px',fontWeight:800,color:'#fff',marginBottom:'2px'}}>No sound?</div>
-              <div style={{fontSize:'11px',color:'#888'}}>Unmute your ringtone to hear chord audio.</div>
-            </div>
-            <button style={btnClose} onPointerDown={tap(audioGotIt)} onClick={tap(audioGotIt)}>×</button>
-          </div>
-          <div style={{display:'flex',gap:'8px'}}>
-            <button onPointerDown={tap(audioGotIt)} onClick={tap(audioGotIt)}
-              style={{flex:1,background:'#ffd93d',color:'#111',border:'none',padding:'10px',
-                borderRadius:'9px',fontSize:'13px',fontWeight:800,cursor:'pointer',minHeight:'44px',
-                touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
-              Got it
-            </button>
-            <button onPointerDown={tap(audioDontShow)} onClick={tap(audioDontShow)}
-              style={{flex:1,background:'transparent',color:'#666',border:'1px solid #2a2840',
-                padding:'10px',borderRadius:'9px',fontSize:'12px',fontWeight:600,cursor:'pointer',minHeight:'44px',
-                touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
-              Don't show again
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Install sheet — always at bottom:0 */}
       {showInstall&&(
@@ -2229,6 +2199,7 @@ export default function App(){
   const[hist,setHist]=useState([]);
   const[degHist,setDegHist]=useState([]);
   const[mastered,setMastered]=useState(()=>new Set());
+  const[showAudioHint,setShowAudioHint]=useState(false);
   const[loaded,setLoaded]=useState(false);
   const[showData,setShowData]=useState(false);
   const[importMsg,setImportMsg]=useState('');
@@ -2243,7 +2214,22 @@ export default function App(){
   degHistRef.current=degHist;
   masteredRef.current=mastered;
 
-  // Inject global mobile CSS once at mount
+  // ── Audio hint: wire _onFirstPlay from App's React tree ──────────────
+  // Registering here (not in a fixed-position component) means the callback
+  // triggers a normal in-tree state update — no coordinate or paint issues.
+  useEffect(()=>{
+    const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    if(!isIOS)return;
+    try{
+      const launches=parseInt(localStorage.getItem('ct_launches')||'0',10);
+      const sup10=parseInt(localStorage.getItem('ct_audio_hint_launch')||'0',10);
+      const sup20=parseInt(localStorage.getItem('ct_audio_hint_launch20')||'0',10);
+      if(Math.max(sup10,sup20)>=launches)return;
+    }catch(e){}
+    if(_firstPlayFired){setShowAudioHint(true);return;}
+    _onFirstPlay=()=>setShowAudioHint(true);
+    return()=>{_onFirstPlay=null;};
+  },[]);
   useEffect(()=>{
     const style=document.createElement('style');
     style.textContent=`
@@ -2512,6 +2498,18 @@ export default function App(){
       </div>
       {/* Safe-area bottom padding + extra room for install banner */}
       <div style={{paddingBottom:'max(32px,env(safe-area-inset-bottom))'}}>
+        {showAudioHint&&(
+          <AudioHintPanel
+            onDismiss10={()=>{
+              setShowAudioHint(false);
+              try{const n=parseInt(localStorage.getItem('ct_launches')||'0',10);localStorage.setItem('ct_audio_hint_launch',String(n+10));}catch(e){}
+            }}
+            onDismiss20={()=>{
+              setShowAudioHint(false);
+              try{const n=parseInt(localStorage.getItem('ct_launches')||'0',10);localStorage.setItem('ct_audio_hint_launch20',String(n+20));}catch(e){}
+            }}
+          />
+        )}
         {tab==='daily'&&<ChordsOfDay srsData={srs} showDeg={showDeg} setShowDeg={setShowDeg} onMarkReviewed={onMarkReviewed} mastered={mastered} onToggleMastered={onToggleMastered}/>}
         {tab==='library'&&<Library showDeg={showDeg} setShowDeg={setShowDeg} mastered={mastered} onToggleMastered={onToggleMastered}/>}
         {tab==='progs'&&<ProgressionsTab showDeg={showDeg}/>}
