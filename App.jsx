@@ -2264,9 +2264,18 @@ export default function App(){
     style.textContent=`
       *{-webkit-tap-highlight-color:transparent;box-sizing:border-box;}
       button,a,label,[role=button]{touch-action:manipulation;-webkit-user-select:none;user-select:none;}
-      body{overscroll-behavior-y:none;-webkit-overflow-scrolling:touch;}
+      body{overscroll-behavior-y:none;-webkit-overflow-scrolling:touch;background:#0f0e17;}
       input,textarea,select{font-size:16px!important;}
+      :root{--sat:env(safe-area-inset-top);--sab:env(safe-area-inset-bottom);}
     `;
+    // Inject viewport meta synchronously — must exist before first paint in standalone mode.
+    // useEffect runs after paint so we also set it here via DOM manipulation which is
+    // synchronous within this script execution.
+    (()=>{
+      let vp=document.querySelector('meta[name="viewport"]');
+      if(!vp){vp=document.createElement('meta');vp.name='viewport';document.head.prepend(vp);}
+      vp.content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover';
+    })();
     // ── Generate app icon via canvas and inject as apple-touch-icon + manifest ──
     function makeIcon(size){
       const c=document.createElement('canvas');c.width=c.height=size;
@@ -2487,8 +2496,11 @@ export default function App(){
   const TABS=[{id:'daily',label:'Today',icon:'🌅'},{id:'library',label:'Library',icon:'📚'},{id:'progs',label:'Progs',icon:'🎵'},{id:'quiz',label:'Quiz',icon:'🎯'},{id:'weak',label:'Weak',icon:'💪'},{id:'help',label:'Guide',icon:'📖'}];
 
   return(
-    <div style={{background:'#0f0e17',minHeight:'100vh',color:'#fffffe',fontFamily:"'Segoe UI',system-ui,sans-serif",maxWidth:'100vw',overflowX:'hidden',WebkitFontSmoothing:'antialiased'}}>
-      <div style={{padding:'10px 12px',paddingTop:'max(10px,env(safe-area-inset-top))',borderBottom:'1px solid #1a1928',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}>
+    <div style={{background:'#0f0e17',minHeight:'100dvh',color:'#fffffe',fontFamily:"'Segoe UI',system-ui,sans-serif",maxWidth:'100vw',overflowX:'hidden',WebkitFontSmoothing:'antialiased',
+        // Pad the entire app shell by the status bar height — this is what
+        // makes touch coordinates match visual position in standalone mode.
+        paddingTop:'env(safe-area-inset-top)'}}>
+      <div style={{padding:'10px 12px',borderBottom:'1px solid #1a1928',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}>
         <div style={{display:'flex',flexDirection:'column'}}>
           <div style={{fontSize:'16px',fontWeight:900,lineHeight:'1.1'}}>🎸 <span style={{color:'#ffd93d'}}>Chord</span>Trainer</div>
           <div style={{fontSize:'9px',color:'#555',letterSpacing:'1px',paddingLeft:'22px'}}>by Zak</div>
