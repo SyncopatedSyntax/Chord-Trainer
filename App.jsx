@@ -2051,64 +2051,48 @@ function BannerStack(){
   const hasAny=showInstall||showAudio;
   if(!hasAny)return null;
 
-  // Each card is its own position:fixed element — no wrapper container,
-  // no pointerEvents:'none' layer, no stacking context issues on iOS standalone.
-  // Install sits at bottom; audio card sits above it when both are showing.
-  const CARD_GAP=8;
-  const BOTTOM_BASE=16;
-  // Estimate install card height for stacking offset
-  const installH=isIOS?90:110;
-  const audioBottom=showInstall
-    ? `calc(max(${BOTTOM_BASE}px, env(safe-area-inset-bottom)) + ${installH+CARD_GAP}px)`
-    : `max(${BOTTOM_BASE}px, env(safe-area-inset-bottom))`;
-  const installBottom=`max(${BOTTOM_BASE}px, env(safe-area-inset-bottom))`;
-
-  const cardStyle={
+  const sheetStyle={
     position:'fixed',
-    left:'12px',right:'12px',
+    left:0,right:0,
     zIndex:9999,
-    background:'#242235',
-    borderRadius:'18px',
-    border:'1px solid #2a2840',
-    boxShadow:'0 8px 40px #000000aa',
-    padding:'14px 14px 12px',
-    animation:'floatUp .3s cubic-bezier(.34,1.56,.64,1)',
+    background:'#1a1928',
+    borderTop:'1px solid #2a2840',
+    boxShadow:'0 -4px 24px #000000aa',
+    padding:'12px 16px',
   };
-
   const btnClose={
-    background:'transparent',border:'none',color:'#555',fontSize:'20px',
-    padding:'4px 6px',lineHeight:1,flexShrink:0,cursor:'pointer',
+    background:'transparent',border:'none',color:'#555',fontSize:'22px',
+    padding:'0 4px',lineHeight:1,flexShrink:0,cursor:'pointer',
     touchAction:'manipulation',WebkitTapHighlightColor:'transparent',
-    minWidth:'32px',minHeight:'44px',
+    minWidth:'36px',minHeight:'44px',
     display:'flex',alignItems:'center',justifyContent:'center',
   };
+  const installH=isIOS?72:102;
+  const audioBottom=showInstall?installH:0;
 
   return(
     <>
-      <style>{`@keyframes floatUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
-
-      {/* Audio hint card */}
+      {/* Audio hint — sits above install sheet when both visible */}
       {showAudio&&(
-        <div style={{...cardStyle,bottom:audioBottom}}>
-          <div style={{display:'flex',alignItems:'flex-start',gap:'10px',marginBottom:'12px'}}>
-            <div style={{fontSize:'22px',lineHeight:1,flexShrink:0}}>🔔</div>
+        <div style={{...sheetStyle,bottom:audioBottom,paddingBottom:audioBottom===0?'max(12px,env(safe-area-inset-bottom))':'12px'}}>
+          <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'10px'}}>
+            <div style={{fontSize:'20px',lineHeight:1,flexShrink:0}}>🔔</div>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:'13px',fontWeight:800,color:'#fff',marginBottom:'3px'}}>No sound?</div>
-              <div style={{fontSize:'12px',color:'#aaa',lineHeight:'1.5'}}>Unmute your ringtone to hear chord audio.</div>
+              <div style={{fontSize:'13px',fontWeight:800,color:'#fff',marginBottom:'2px'}}>No sound?</div>
+              <div style={{fontSize:'11px',color:'#888'}}>Unmute your ringtone to hear chord audio.</div>
             </div>
-            <button style={btnClose}
-              onPointerDown={tap(audioGotIt)} onClick={tap(audioGotIt)}>×</button>
+            <button style={btnClose} onPointerDown={tap(audioGotIt)} onClick={tap(audioGotIt)}>×</button>
           </div>
           <div style={{display:'flex',gap:'8px'}}>
             <button onPointerDown={tap(audioGotIt)} onClick={tap(audioGotIt)}
               style={{flex:1,background:'#ffd93d',color:'#111',border:'none',padding:'10px',
-                borderRadius:'11px',fontSize:'13px',fontWeight:800,cursor:'pointer',minHeight:'44px',
+                borderRadius:'9px',fontSize:'13px',fontWeight:800,cursor:'pointer',minHeight:'44px',
                 touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
               Got it
             </button>
             <button onPointerDown={tap(audioDontShow)} onClick={tap(audioDontShow)}
               style={{flex:1,background:'transparent',color:'#666',border:'1px solid #2a2840',
-                padding:'10px',borderRadius:'11px',fontSize:'12px',fontWeight:600,cursor:'pointer',minHeight:'44px',
+                padding:'10px',borderRadius:'9px',fontSize:'12px',fontWeight:600,cursor:'pointer',minHeight:'44px',
                 touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
               Don't show again
             </button>
@@ -2116,11 +2100,11 @@ function BannerStack(){
         </div>
       )}
 
-      {/* Install card */}
+      {/* Install sheet — always at bottom:0 */}
       {showInstall&&(
-        <div style={{...cardStyle,bottom:installBottom}}>
+        <div style={{...sheetStyle,bottom:0,paddingBottom:'max(12px,env(safe-area-inset-bottom))'}}>
           <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:!isIOS?'10px':'0'}}>
-            <div style={{fontSize:'24px',lineHeight:1,flexShrink:0}}>🎸</div>
+            <div style={{fontSize:'22px',lineHeight:1,flexShrink:0}}>🎸</div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:'13px',fontWeight:800,color:'#fff',marginBottom:'2px'}}>
                 {isIOS?'Get the full experience — add to Home Screen':'Practice anytime — install ChordTrainer'}
@@ -2131,13 +2115,12 @@ function BannerStack(){
                   :'Full-screen, works offline, opens instantly'}
               </div>
             </div>
-            <button style={btnClose}
-              onPointerDown={tap(dismissInstall)} onClick={tap(dismissInstall)}>×</button>
+            <button style={btnClose} onPointerDown={tap(dismissInstall)} onClick={tap(dismissInstall)}>×</button>
           </div>
           {!isIOS&&(
             <button onPointerDown={tap(installAndroid)} onClick={tap(installAndroid)}
               style={{display:'block',width:'100%',background:'#ffd93d',color:'#111',border:'none',
-                padding:'10px',borderRadius:'11px',fontSize:'13px',fontWeight:800,cursor:'pointer',minHeight:'44px',
+                padding:'10px',borderRadius:'9px',fontSize:'13px',fontWeight:800,cursor:'pointer',minHeight:'44px',
                 touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
               Install
             </button>
