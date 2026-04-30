@@ -2243,8 +2243,8 @@ export default function App(){
     const style=document.createElement('style');
     style.textContent=`
       *{-webkit-tap-highlight-color:transparent;box-sizing:border-box;}
+      html,body{height:100%;overflow:hidden;position:fixed;width:100%;background:#0f0e17;}
       button,a,label,[role=button]{touch-action:manipulation;-webkit-user-select:none;user-select:none;}
-      body{overscroll-behavior-y:none;-webkit-overflow-scrolling:touch;background:#0f0e17;}
       input,textarea,select{font-size:16px!important;}
       svg{user-select:none;-webkit-user-select:none;pointer-events:none;}
       svg [onclick],svg [style*='cursor']{pointer-events:auto;}
@@ -2478,10 +2478,7 @@ export default function App(){
   const TABS=[{id:'daily',label:'Today',icon:'🌅'},{id:'library',label:'Library',icon:'📚'},{id:'progs',label:'Progs',icon:'🎵'},{id:'quiz',label:'Quiz',icon:'🎯'},{id:'weak',label:'Weak',icon:'💪'},{id:'help',label:'Guide',icon:'📖'}];
 
   return(
-    <div style={{background:'#0f0e17',minHeight:'100dvh',color:'#fffffe',fontFamily:"'Segoe UI',system-ui,sans-serif",maxWidth:'100vw',overflowX:'hidden',WebkitFontSmoothing:'antialiased',
-        // Pad the entire app shell by the status bar height — this is what
-        // makes touch coordinates match visual position in standalone mode.
-        paddingTop:'env(safe-area-inset-top)'}}>
+    <div style={{background:'#0f0e17',position:'fixed',inset:0,display:'flex',flexDirection:'column',color:'#fffffe',fontFamily:"'Segoe UI',system-ui,sans-serif",WebkitFontSmoothing:'antialiased',paddingTop:'env(safe-area-inset-top)'}}>
       <div style={{padding:'10px 12px',borderBottom:'1px solid #1a1928',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}>
         <div style={{display:'flex',flexDirection:'column'}}>
           <div style={{fontSize:'16px',fontWeight:900,lineHeight:'1.1'}}>🎸 <span style={{color:'#ffd93d'}}>Chord</span>Trainer</div>
@@ -2508,8 +2505,9 @@ export default function App(){
         {TABS.map(t=>(<button key={t.id} onClick={()=>setTab(t.id)} style={{flex:'0 0 auto',padding:'10px 10px',background:'transparent',border:'none',cursor:'pointer',fontSize:'10px',fontWeight:600,color:tab===t.id?'#ffd93d':'#888',borderBottom:tab===t.id?'2px solid #ffd93d':'2px solid transparent',whiteSpace:'nowrap',minHeight:'44px',touchAction:'manipulation'}}>{t.icon} {t.label}</button>))}
       </div>
       {/* Safe-area bottom padding + extra room for install banner */}
-      <div style={{paddingBottom:'max(32px,env(safe-area-inset-bottom))'}}>
-      {/* ── DEBUG PANEL — remove this block when done ── */}
+      {/* Scrollable content — flex:1 takes remaining height below header+tabbar */}
+      <div style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',overscrollBehaviorY:'none'}}>
+        <div style={{paddingBottom:'max(32px,env(safe-area-inset-bottom))'}}>      {/* ── DEBUG PANEL — remove this block when done ── */}
       {(()=>{
         const ls=k=>localStorage.getItem(k)||'(unset)';
         const ss=k=>sessionStorage.getItem(k)||'(unset)';
@@ -2565,6 +2563,7 @@ export default function App(){
         {tab==='quiz'&&<QuizTab showDeg={showDeg} onChordQuizDone={onChordQuizDone} onDegDone={onDegDone}/>}
         {tab==='weak'&&<WeakTab history={hist} degHist={degHist} srs={srs} showDeg={showDeg} onComplete={onChordQuizDone}/>}
         {tab==='help'&&<HelpTab/>}
+        </div>
       </div>
       <BannerStack/>
     </div>
