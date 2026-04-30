@@ -1947,34 +1947,43 @@ const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkRe
 // Shown at the top of the Today tab content area — same approach as ChordDetail.
 function AudioHintPanel({onDismiss10,onDismiss20}){
   return(
-    <div style={{margin:'12px 12px 0',background:'#13121f',borderRadius:'12px',border:'1px solid #2a2840',padding:'12px 14px',boxShadow:'0 2px 12px #00000066'}}>
-      <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'10px'}}>
-        <div style={{fontSize:'20px',lineHeight:1,flexShrink:0}}>🔔</div>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:'13px',fontWeight:800,color:'#fff',marginBottom:'2px'}}>No sound?</div>
-          <div style={{fontSize:'11px',color:'#888',lineHeight:'1.4'}}>Unmute your ringtone to hear chord audio.</div>
+    <>
+      {/* Backdrop */}
+      <div onClick={onDismiss10} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:9000,backdropFilter:'blur(2px)',WebkitBackdropFilter:'blur(2px)'}}/>
+      {/* Centered card */}
+      <div style={{
+        position:'fixed',
+        top:'50%',left:'50%',
+        transform:'translate(-50%,-50%)',
+        zIndex:9001,
+        width:'min(320px, calc(100vw - 48px))',
+        background:'#242235',
+        borderRadius:'18px',
+        border:'1px solid #2a2840',
+        boxShadow:'0 16px 64px #000000cc',
+        padding:'20px 18px 16px',
+      }}>
+        <div style={{textAlign:'center',marginBottom:'14px'}}>
+          <div style={{fontSize:'36px',marginBottom:'10px'}}>🔔</div>
+          <div style={{fontSize:'15px',fontWeight:800,color:'#fff',marginBottom:'6px'}}>No sound?</div>
+          <div style={{fontSize:'13px',color:'#aaa',lineHeight:'1.5'}}>Unmute your ringtone to hear chord audio.</div>
         </div>
-        <button onClick={onDismiss10}
-          style={{background:'transparent',border:'none',color:'#555',fontSize:'22px',cursor:'pointer',
-            padding:'0 4px',lineHeight:1,minWidth:'36px',minHeight:'44px',flexShrink:0,
-            display:'flex',alignItems:'center',justifyContent:'center',
-            touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>×</button>
+        <div style={{display:'flex',gap:'8px'}}>
+          <button onClick={onDismiss10}
+            style={{flex:1,background:'#ffd93d',color:'#111',border:'none',padding:'12px',
+              borderRadius:'11px',fontSize:'14px',fontWeight:800,cursor:'pointer',minHeight:'48px',
+              touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
+            Got it
+          </button>
+          <button onClick={onDismiss20}
+            style={{flex:1,background:'transparent',color:'#666',border:'1px solid #2a2840',
+              padding:'12px',borderRadius:'11px',fontSize:'12px',fontWeight:600,cursor:'pointer',minHeight:'48px',
+              touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
+            Don't show again
+          </button>
+        </div>
       </div>
-      <div style={{display:'flex',gap:'8px'}}>
-        <button onClick={onDismiss10}
-          style={{flex:1,background:'#ffd93d',color:'#111',border:'none',padding:'10px',
-            borderRadius:'9px',fontSize:'13px',fontWeight:800,cursor:'pointer',minHeight:'44px',
-            touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
-          Got it
-        </button>
-        <button onClick={onDismiss20}
-          style={{flex:1,background:'transparent',color:'#666',border:'1px solid #2a2840',
-            padding:'10px',borderRadius:'9px',fontSize:'12px',fontWeight:600,cursor:'pointer',minHeight:'44px',
-            touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
-          Don't show again
-        </button>
-      </div>
-    </div>
+    </>
   );
 }
 
