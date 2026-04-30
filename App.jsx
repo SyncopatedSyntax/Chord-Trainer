@@ -728,7 +728,7 @@ function ChordDiagram({v,showDeg,size}){
       dots.push(<g key={i}><circle cx={x} cy={cy} r={DR} fill={fill}/>{d&&showDeg&&<text x={x} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={d.length>2?5:d.length>1?6:7} fill="#111" fontWeight="bold" fontFamily="sans-serif">{d}</text>}</g>);
     }
   }
-  return(<svg viewBox={`0 0 ${W} ${H}`} width={W*sc} height={H*sc} style={{display:'block'}}>
+  return(<svg viewBox={`0 0 ${W} ${H}`} width={W*sc} height={H*sc} style={{display:'block',userSelect:'none',WebkitUserSelect:'none',touchAction:'manipulation'}}>
     {Array.from({length:nFrets+1},(_,j)=><line key={j} x1={ML} y1={MT+j*FS} x2={ML+GW} y2={MT+j*FS} stroke={j===0&&sf===1?'#bbb':'#2a2840'} strokeWidth={j===0&&sf===1?3:1.5}/>)}
     {[0,1,2,3,4,5].map(i=><line key={i} x1={sx(i)} y1={MT} x2={sx(i)} y2={MT+nFrets*FS} stroke="#2a2840" strokeWidth={1.5}/>)}
     {sf>1&&<text x={ML+GW+10} y={MT+FS*0.68} fontSize={10} fill="#bbb" fontFamily="monospace" textAnchor="start">{sf}fr</text>}
@@ -769,7 +769,7 @@ function ClickableDiagram({v,onDotClick,selIdx,revealed,targetDeg,size}){
       </g>);
     }
   }
-  return(<svg viewBox={`0 0 ${W} ${H}`} width={W*sc} height={H*sc} style={{display:'block',touchAction:'manipulation'}}>
+  return(<svg viewBox={`0 0 ${W} ${H}`} width={W*sc} height={H*sc} style={{display:'block',touchAction:'manipulation',userSelect:'none',WebkitUserSelect:'none'}}>
     {Array.from({length:nFrets+1},(_,j)=><line key={j} x1={ML} y1={MT+j*FS} x2={ML+GW} y2={MT+j*FS} stroke={j===0&&sf===1?'#bbb':'#2a2840'} strokeWidth={j===0&&sf===1?3:1.5}/>)}
     {[0,1,2,3,4,5].map(i=><line key={i} x1={sx(i)} y1={MT} x2={sx(i)} y2={MT+nFrets*FS} stroke="#2a2840" strokeWidth={1.5}/>)}
     {sf>1&&<text x={ML+GW+10} y={MT+FS*0.68} fontSize={10} fill="#bbb" fontFamily="monospace" textAnchor="start">{sf}fr</text>}
@@ -2246,6 +2246,8 @@ export default function App(){
       button,a,label,[role=button]{touch-action:manipulation;-webkit-user-select:none;user-select:none;}
       body{overscroll-behavior-y:none;-webkit-overflow-scrolling:touch;background:#0f0e17;}
       input,textarea,select{font-size:16px!important;}
+      svg{user-select:none;-webkit-user-select:none;pointer-events:none;}
+      svg [onclick],svg [style*='cursor']{pointer-events:auto;}
       :root{--sat:env(safe-area-inset-top);--sab:env(safe-area-inset-bottom);}
     `;
     // Inject viewport meta synchronously — must exist before first paint in standalone mode.
