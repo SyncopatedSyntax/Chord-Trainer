@@ -2243,7 +2243,7 @@ export default function App(){
     const style=document.createElement('style');
     style.textContent=`
       *{-webkit-tap-highlight-color:transparent;box-sizing:border-box;}
-      html,body{height:100%;overflow:hidden;position:fixed;width:100%;background:#0f0e17;}
+      html,body{height:100%;overflow:hidden;background:#0f0e17;}
       button,a,label,[role=button]{touch-action:manipulation;-webkit-user-select:none;user-select:none;}
       input,textarea,select{font-size:16px!important;}
       svg{user-select:none;-webkit-user-select:none;pointer-events:none;}
@@ -2372,6 +2372,16 @@ export default function App(){
     setLink('apple-touch-icon','180x180',iconUrl180);
     setLink('icon','512x512',iconUrl);
 
+    // ── iOS standalone scroll offset fix ─────────────────────────────────
+    // In standalone PWA mode, WebKit initialises window.scrollY to the
+    // safe-area-inset-top value (~50px). Touch events fire at layout coords
+    // but the screen renders the visual viewport scrolled 50px down — causing
+    // every tap to register 50px above where it visually appears.
+    // Fix: immediately scroll to 0,0 and keep it there.
+    window.scrollTo(0,0);
+    const lockScroll=()=>{if(window.scrollY!==0||window.scrollX!==0)window.scrollTo(0,0);};
+    window.addEventListener('scroll',lockScroll,{passive:true});
+
     document.head.appendChild(style);
     // Theme + viewport
     const setMeta=(name,content)=>{let m=document.querySelector(`meta[name="${name}"]`);if(!m){m=document.createElement('meta');m.name=name;document.head.appendChild(m);}m.content=content;};
@@ -2398,7 +2408,7 @@ export default function App(){
     if(!mlink){mlink=document.createElement('link');mlink.rel='manifest';document.head.appendChild(mlink);}
     mlink.href=murl;
 
-    return()=>{document.head.removeChild(style);URL.revokeObjectURL(murl);};
+    return()=>{document.head.removeChild(style);window.removeEventListener('scroll',lockScroll);URL.revokeObjectURL(murl);};
   },[]);
 
   useEffect(()=>{
@@ -2478,7 +2488,7 @@ export default function App(){
   const TABS=[{id:'daily',label:'Today',icon:'🌅'},{id:'library',label:'Library',icon:'📚'},{id:'progs',label:'Progs',icon:'🎵'},{id:'quiz',label:'Quiz',icon:'🎯'},{id:'weak',label:'Weak',icon:'💪'},{id:'help',label:'Guide',icon:'📖'}];
 
   return(
-    <div style={{background:'#0f0e17',position:'fixed',inset:0,display:'flex',flexDirection:'column',color:'#fffffe',fontFamily:"'Segoe UI',system-ui,sans-serif",WebkitFontSmoothing:'antialiased',paddingTop:'env(safe-area-inset-top)'}}>
+    <div style={{background:'#0f0e17',height:'100dvh',display:'flex',flexDirection:'column',color:'#fffffe',fontFamily:"'Segoe UI',system-ui,sans-serif",WebkitFontSmoothing:'antialiased',paddingTop:'env(safe-area-inset-top)'}}>
       <div style={{padding:'10px 12px',borderBottom:'1px solid #1a1928',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}>
         <div style={{display:'flex',flexDirection:'column'}}>
           <div style={{fontSize:'16px',fontWeight:900,lineHeight:'1.1'}}>🎸 <span style={{color:'#ffd93d'}}>Chord</span>Trainer</div>
