@@ -386,6 +386,28 @@ const CHORDS=[
   {id:'d2min7_6_3i',name:'Min7 Drop2 3rd inv',   sym:'m7/b7',cat:'drop2',movable:true,voicings:[{label:'6543 b7-b3-5-R · ex Cm7@5fr',str:[6,6,5,5,-1,-1],deg:['b7','b3','5','R',null,null],sf:5}]},
   // Cø: E6=Bb(b7:46✓), A6=Eb(b3:51✓), D4=Gb(b5:54✓), G5=C(R:60✓)
   {id:'d2m7b5_6_3i',name:'m7b5 Drop2 3rd inv',   sym:'ø/b7',cat:'drop2',movable:true,voicings:[{label:'6543 b7-b3-b5-R · ex Cø@4fr',str:[6,6,4,5,-1,-1],deg:['b7','b3','b5','R',null,null],sf:4}]},
+
+  // ── SHELL INVERSIONS ─────────────────────────────────────────────────────
+  // 3-note shell chords with 3rd or 7th in the bass — real jazz voice-leading voicings.
+  // All verified MIDI. All spans ≤ 4 frets.
+  // Dom7 1st inv (3 in bass) 6-5-4: E7=B(3):47✓ A8=F(b7):53✓ D5=G(R):55✓
+  {id:'sh7_6_1i',   name:'Dom7 Shell 1st inv', sym:'7/3',  cat:'shell',movable:true,voicings:[{label:'6-5-4 3-b7-R · ex G7/B@5fr',    str:[7,8,5,-1,-1,-1],deg:['3','b7','R',null,null,null],  sf:5}]},
+  // Dom7 2nd inv (b7 in bass) 5-4-3: A8=F(b7):53✓ D5=G(R):55✓ G4=B(3):59✓
+  {id:'sh7_5_2i',   name:'Dom7 Shell 2nd inv', sym:'7/b7', cat:'shell',movable:true,voicings:[{label:'5-4-3 b7-R-3 · ex G7/F@4fr',    str:[-1,8,5,4,-1,-1],deg:[null,'b7','R','3',null,null],  sf:4}]},
+  // Maj7 1st inv (3 in bass) 6-5-4: E7=B(3):47✓ A9=F#(7):54✓ D5=G(R):55✓
+  {id:'shMaj7_6_1i',name:'Maj7 Shell 1st inv', sym:'Δ/3',  cat:'shell',movable:true,voicings:[{label:'6-5-4 3-7-R · ex Gmaj7/B@5fr',  str:[7,9,5,-1,-1,-1],deg:['3','7','R',null,null,null],   sf:5}]},
+  // Maj7 2nd inv (7 in bass) 4-3-2: D5=G(R):55✓ G4=B(3):59✓ B7=F#(7):66✓
+  {id:'shMaj7_4_2i',name:'Maj7 Shell 2nd inv', sym:'Δ/7',  cat:'shell',movable:true,voicings:[{label:'4-3-2 R-3-7 · ex Gmaj7/F#@5fr', str:[-1,-1,5,4,7,-1],deg:[null,null,'R','3','7',null],   sf:4}]},
+  // Min7 1st inv (b3 in bass) 6-5-4: E6=Bb(b3):46✓ A8=F(b7):53✓ D5=G(R):55✓
+  {id:'shm7_6_1i',  name:'Min7 Shell 1st inv', sym:'m7/b3',cat:'shell',movable:true,voicings:[{label:'6-5-4 b3-b7-R · ex Gm7/Bb@4fr', str:[6,8,5,-1,-1,-1],deg:['b3','b7','R',null,null,null], sf:4}]},
+  // Min7 2nd inv (b7 in bass) 4-3-2: D5=G(R):55✓ G3=Bb(b3):58✓ B6=F(b7):65✓
+  {id:'shm7_4_2i',  name:'Min7 Shell 2nd inv', sym:'m7/b7',cat:'shell',movable:true,voicings:[{label:'4-3-2 R-b3-b7 · ex Gm7/F@5fr',  str:[-1,-1,5,3,6,-1],deg:[null,null,'R','b3','b7',null],  sf:3}]},
+  // m7b5 1st inv (b3 in bass) 6-5-4: E6=Bb(b3):46✓ A8=F(b7):53✓ D5=G(R):55✓
+  {id:'shm7b5_6_1i',name:'m7b5 Shell 1st inv', sym:'ø/b3', cat:'shell',movable:true,voicings:[{label:'6-5-4 b3-b7-R · ex Gø/Bb@4fr',  str:[6,8,5,-1,-1,-1],deg:['b3','b7','R',null,null,null], sf:4}]},
+  // m7b5 2nd inv (b7 in bass) 5-4-3: A8=F(b7):53✓ D5=G(R):55✓ G3=Bb(b3):58✓
+  {id:'shm7b5_5_2i',name:'m7b5 Shell 2nd inv', sym:'ø/b7', cat:'shell',movable:true,voicings:[{label:'5-4-3 b7-R-b3 · ex Gø/F@3fr',   str:[-1,8,5,3,-1,-1],deg:[null,'b7','R','b3',null,null],  sf:3}]},
+  // Dim7 1st inv (b3 in bass) 6-5-4: E6=Bb(b3):46✓ A7=E(bb7):52✓ D5=G(R):55✓
+  {id:'shdim7_6_1i',name:'Dim7 Shell 1st inv', sym:'°7/b3',cat:'shell',movable:true,voicings:[{label:'6-5-4 b3-bb7-R · ex G°7/Bb@4fr', str:[6,7,5,-1,-1,-1],deg:['b3','bb7','R',null,null,null], sf:4}]},
 ];
 const PROGS=[
   {title:'ii–V–I · C major',feel:'Jazz',desc:'The cornerstone of jazz. Dm7 creates tension, G7 raises it, Cmaj7 resolves.',chords:[{sym:'Dm7',rn:'ii',v:{str:[-1,5,3,5,-1,-1],deg:[null,'R','b3','b7',null,null],sf:3}},{sym:'G7',rn:'V',v:{str:[3,-1,3,4,-1,-1],deg:['R',null,'b7','3',null,null],sf:1}},{sym:'Cmaj7',rn:'I',v:{str:[-1,3,2,4,-1,-1],deg:[null,'R','3','7',null,null],sf:1}}]},
@@ -2517,44 +2539,7 @@ export default function App(){
       {/* Safe-area bottom padding + extra room for install banner */}
       {/* Scrollable content — flex:1 takes remaining height below header+tabbar */}
       <div style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',overscrollBehaviorY:'none'}}>
-        <div style={{paddingBottom:'max(32px,env(safe-area-inset-bottom))'}}>      {/* ── DEBUG PANEL — remove this block when done ── */}
-      {(()=>{
-        const ls=k=>localStorage.getItem(k)||'(unset)';
-        const ss=k=>sessionStorage.getItem(k)||'(unset)';
-        const rows=[
-          ['ct_launches',ls('ct_launches')],
-          ['ct_audio_hint_launch',ls('ct_audio_hint_launch')],
-          ['ct_audio_hint_launch20',ls('ct_audio_hint_launch20')],
-          ['ct_launched (session)',ss('ct_launched')],
-          ['_firstPlayFired',String(_firstPlayFired)],
-          ['_onFirstPlay registered',String(!!_onFirstPlay)],
-          ['showAudioHint (state)',String(showAudioHint)],
-          ['isIOS',String(/iphone|ipad|ipod/i.test(navigator.userAgent))],
-          ['isStandalone',String(window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone===true)],
-        ];
-        return(
-          <div style={{margin:'8px 12px',background:'#0a0918',border:'1px solid #ff6b6b',borderRadius:'8px',padding:'8px 10px'}}>
-            <div style={{fontSize:'10px',color:'#ff6b6b',fontWeight:700,marginBottom:'5px',letterSpacing:'1px'}}>🐛 DEBUG — remove before release</div>
-            {rows.map(([k,v])=>(
-              <div key={k} style={{display:'flex',gap:'8px',fontSize:'10px',fontFamily:'monospace',marginBottom:'2px'}}>
-                <span style={{color:'#888',minWidth:'180px',flexShrink:0}}>{k}</span>
-                <span style={{color:'#ffd93d'}}>{v}</span>
-              </div>
-            ))}
-            <div style={{display:'flex',gap:'6px',marginTop:'7px',flexWrap:'wrap'}}>
-              <button onClick={()=>{localStorage.clear();sessionStorage.clear();location.reload();}}
-                style={{fontSize:'9px',color:'#ff6b6b',background:'transparent',border:'1px solid #ff6b6b33',borderRadius:'5px',padding:'3px 8px',cursor:'pointer'}}>
-                Clear all & reload
-              </button>
-              <button onClick={()=>setShowAudioHint(true)}
-                style={{fontSize:'9px',color:'#00b894',background:'transparent',border:'1px solid #00b89433',borderRadius:'5px',padding:'3px 8px',cursor:'pointer'}}>
-                Force show hint
-              </button>
-            </div>
-          </div>
-        );
-      })()}
-      {/* ── END DEBUG PANEL ── */}
+        <div style={{paddingBottom:'max(32px,env(safe-area-inset-bottom))'}}>
         {tab==='daily'&&<ChordsOfDay srsData={srs} showDeg={showDeg} setShowDeg={setShowDeg} onMarkReviewed={onMarkReviewed} mastered={mastered} onToggleMastered={onToggleMastered}/>}
         {tab==='library'&&<Library showDeg={showDeg} setShowDeg={setShowDeg} mastered={mastered} onToggleMastered={onToggleMastered}/>}
         {tab==='progs'&&<ProgressionsTab showDeg={showDeg}/>}
