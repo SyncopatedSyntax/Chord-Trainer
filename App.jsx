@@ -402,10 +402,8 @@ const CHORDS=[
   {id:'shm7_6_1i',  name:'Min7 Shell 1st inv', sym:'m7/b3',cat:'shell',movable:true,voicings:[{label:'6-5-4 b3-b7-R · ex Gm7/Bb@4fr', str:[6,8,5,-1,-1,-1],deg:['b3','b7','R',null,null,null], sf:4}]},
   // Min7 2nd inv (b7 in bass) 4-3-2: D5=G(R):55✓ G3=Bb(b3):58✓ B6=F(b7):65✓
   {id:'shm7_4_2i',  name:'Min7 Shell 2nd inv', sym:'m7/b7',cat:'shell',movable:true,voicings:[{label:'4-3-2 R-b3-b7 · ex Gm7/F@5fr',  str:[-1,-1,5,3,6,-1],deg:[null,null,'R','b3','b7',null],  sf:3}]},
-  // m7b5 1st inv (b3 in bass) 6-5-4: E6=Bb(b3):46✓ A8=F(b7):53✓ D5=G(R):55✓
-  {id:'shm7b5_6_1i',name:'m7b5 Shell 1st inv', sym:'ø/b3', cat:'shell',movable:true,voicings:[{label:'6-5-4 b3-b7-R · ex Gø/Bb@4fr',  str:[6,8,5,-1,-1,-1],deg:['b3','b7','R',null,null,null], sf:4}]},
-  // m7b5 2nd inv (b7 in bass) 5-4-3: A8=F(b7):53✓ D5=G(R):55✓ G3=Bb(b3):58✓
-  {id:'shm7b5_5_2i',name:'m7b5 Shell 2nd inv', sym:'ø/b7', cat:'shell',movable:true,voicings:[{label:'5-4-3 b7-R-b3 · ex Gø/F@3fr',   str:[-1,8,5,3,-1,-1],deg:[null,'b7','R','b3',null,null],  sf:3}]},
+  // m7b5 1st inv shares fingering with Min7 1st inv (shell omits b5) — not included as duplicate
+  // m7b5 2nd inv on 5-4-3 is an unplayable 5-fret span — omitted
   // Dim7 1st inv (b3 in bass) 6-5-4: E6=Bb(b3):46✓ A7=E(bb7):52✓ D5=G(R):55✓
   {id:'shdim7_6_1i',name:'Dim7 Shell 1st inv', sym:'°7/b3',cat:'shell',movable:true,voicings:[{label:'6-5-4 b3-bb7-R · ex G°7/Bb@4fr', str:[6,7,5,-1,-1,-1],deg:['b3','bb7','R',null,null,null], sf:4}]},
 ];
@@ -1352,7 +1350,7 @@ function ProgressionsTab({showDeg}){
 // ── CHORD DETAIL ─────────────────────────────────────────────────────────
 // Standalone detail view — shared by Library and ChordsOfDay.
 // Automatically enables Scale Degrees while open and restores prior state.
-function ChordDetail({chord,onBack,showDeg,setShowDeg,mastered,onToggleMastered}){
+function ChordDetail({chord,onBack,showDeg,setShowDeg,mastered,onToggleMastered,scrollRef}){
   const[transRoot,setTransRoot]=useState(null);
   // Local state so the button reflects instantly — parent's mastered prop may
   // not propagate if ChordDetail is inside a memo'd component (ChordsOfDay).
@@ -1361,7 +1359,14 @@ function ChordDetail({chord,onBack,showDeg,setShowDeg,mastered,onToggleMastered}
   useEffect(()=>{
     const prev=showDeg;
     setShowDeg(true);
-    return()=>setShowDeg(prev);
+    // Save scroll position then jump to top
+    const el=scrollRef&&scrollRef.current;
+    const savedY=el?el.scrollTop:0;
+    if(el)el.scrollTop=0;
+    return()=>{
+      setShowDeg(prev);
+      if(el)requestAnimationFrame(()=>{el.scrollTop=savedY;});
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
 
@@ -1469,7 +1474,7 @@ function ChordDetail({chord,onBack,showDeg,setShowDeg,mastered,onToggleMastered}
   );
 }
 
-function Library({showDeg,setShowDeg,mastered,onToggleMastered}){
+function Library({showDeg,setShowDeg,mastered,onToggleMastered,scrollRef}){
   const[cat,setCat]=useState('all');
   const[sel,setSel]=useState(null);
   const[transRoot,setTransRoot]=useState(null);
@@ -1517,7 +1522,7 @@ function Library({showDeg,setShowDeg,mastered,onToggleMastered}){
   const handleSel=id=>{setSel(id);setTransRoot(null);};
 
   if(chord){
-    return <ChordDetail chord={chord} onBack={()=>{setSel(null);setTransRoot(null);}} showDeg={showDeg} setShowDeg={setShowDeg} mastered={mastered} onToggleMastered={onToggleMastered}/>;
+    return <ChordDetail chord={chord} onBack={()=>{setSel(null);setTransRoot(null);}} showDeg={showDeg} setShowDeg={setShowDeg} mastered={mastered} onToggleMastered={onToggleMastered} scrollRef={scrollRef}/>;
   }
 
   // ── Helper: chord type strip (shared by both filter modes)
@@ -1842,7 +1847,7 @@ function ProgressionOfDay({showDeg,setSelChord}){
   </div>);
 }
 
-const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkReviewed,mastered,onToggleMastered}){
+const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkReviewed,mastered,onToggleMastered,scrollRef}){
   // Snapshot both daily chords AND srs data at mount — display never changes
   // after first render, so App re-renders (from saveSrs/saveHist) can't cause glitches.
   const[daily]=useState(()=>getDailyChords(srsData,mastered));
@@ -1857,7 +1862,7 @@ const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkRe
 
   // When a chord detail is open, render it (ChordDetail handles auto-showDeg internally)
   if(selChord){
-    return <ChordDetail chord={selChord} onBack={()=>setSelChord(null)} showDeg={showDeg} setShowDeg={setShowDeg} mastered={mastered} onToggleMastered={onToggleMastered}/>;
+    return <ChordDetail chord={selChord} onBack={()=>setSelChord(null)} showDeg={showDeg} setShowDeg={setShowDeg} mastered={mastered} onToggleMastered={onToggleMastered} scrollRef={scrollRef}/>;
   }
 
   return(<div>
@@ -2132,6 +2137,50 @@ function BannerStack(){
   );
 }
 
+// ── DEBUG PANEL ───────────────────────────────────────────────────────────
+// Shown at the bottom of the Guide tab. Easy to remove — just delete this
+// component and the <DebugPanel/> reference in HelpTab.
+function DebugPanel(){
+  const[,forceUpdate]=useState(0);
+  const ls=k=>localStorage.getItem(k)||'(unset)';
+  const ss=k=>sessionStorage.getItem(k)||'(unset)';
+  const rows=[
+    ['ct_launches',          ls('ct_launches')],
+    ['ct_audio_hint_launch', ls('ct_audio_hint_launch')],
+    ['ct_audio_hint_launch20',ls('ct_audio_hint_launch20')],
+    ['ct_mastered count',    (()=>{try{const m=JSON.parse(ls('ct_mastered')||'[]');return String(m.length);}catch(e){return '?';}})()],
+    ['ct_launched (session)',ss('ct_launched')],
+    ['_firstPlayFired',      String(_firstPlayFired)],
+    ['_onFirstPlay set',     String(!!_onFirstPlay)],
+    ['isIOS',                String(/iphone|ipad|ipod/i.test(navigator.userAgent))],
+    ['isStandalone',         String(window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone===true)],
+    ['window.scrollY',       String(window.scrollY)],
+  ];
+  return(
+    <div style={{background:'#0a0918',borderRadius:'10px',border:'1px solid #ff6b6b55',padding:'10px 12px',marginBottom:'10px'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
+        <div style={{fontSize:'10px',color:'#ff6b6b',fontWeight:700,letterSpacing:'1px'}}>🐛 DEBUG</div>
+        <button onClick={()=>forceUpdate(n=>n+1)}
+          style={{fontSize:'9px',color:'#888',background:'transparent',border:'1px solid #2a2840',borderRadius:'5px',padding:'2px 8px',cursor:'pointer',touchAction:'manipulation'}}>
+          Refresh
+        </button>
+      </div>
+      {rows.map(([k,v])=>(
+        <div key={k} style={{display:'flex',gap:'8px',fontSize:'10px',fontFamily:'monospace',marginBottom:'3px'}}>
+          <span style={{color:'#666',minWidth:'170px',flexShrink:0}}>{k}</span>
+          <span style={{color:'#ffd93d'}}>{v}</span>
+        </div>
+      ))}
+      <div style={{display:'flex',gap:'6px',marginTop:'10px',flexWrap:'wrap'}}>
+        <button onClick={()=>{localStorage.clear();sessionStorage.clear();location.reload();}}
+          style={{fontSize:'9px',color:'#ff6b6b',background:'transparent',border:'1px solid #ff6b6b44',borderRadius:'5px',padding:'4px 10px',cursor:'pointer',minHeight:'32px',touchAction:'manipulation'}}>
+          Clear all & reload
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function HelpTab(){
   const[openTier,setOpenTier]=useState(null);
   const toggleTier=id=>setOpenTier(cur=>cur===id?null:id);
@@ -2216,6 +2265,8 @@ function HelpTab(){
           );
         })}
       </div>
+      {/* ── DEBUG ── */}
+      <DebugPanel/>
       <div style={{textAlign:'center',padding:'10px',background:'#13121f',borderRadius:'10px',border:'1px solid #2a2840'}}>
         <div style={{fontSize:'12px',color:'#555'}}>Made with 🎸 by <span style={{color:'#ffd93d',fontWeight:700}}>Zak</span></div>
       </div>
@@ -2236,6 +2287,7 @@ export default function App(){
   const[importMsg,setImportMsg]=useState('');
 
   // Refs for async callbacks — always fresh values, never cause re-renders
+  const scrollRef=useRef(null);
   const srsRef=useRef(srs);
   const histRef=useRef(hist);
   const degHistRef=useRef(degHist);
@@ -2538,10 +2590,10 @@ export default function App(){
       </div>
       {/* Safe-area bottom padding + extra room for install banner */}
       {/* Scrollable content — flex:1 takes remaining height below header+tabbar */}
-      <div style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',overscrollBehaviorY:'none'}}>
+      <div ref={scrollRef} style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',overscrollBehaviorY:'none'}}>
         <div style={{paddingBottom:'max(32px,env(safe-area-inset-bottom))'}}>
-        {tab==='daily'&&<ChordsOfDay srsData={srs} showDeg={showDeg} setShowDeg={setShowDeg} onMarkReviewed={onMarkReviewed} mastered={mastered} onToggleMastered={onToggleMastered}/>}
-        {tab==='library'&&<Library showDeg={showDeg} setShowDeg={setShowDeg} mastered={mastered} onToggleMastered={onToggleMastered}/>}
+        {tab==='daily'&&<ChordsOfDay srsData={srs} showDeg={showDeg} setShowDeg={setShowDeg} onMarkReviewed={onMarkReviewed} mastered={mastered} onToggleMastered={onToggleMastered} scrollRef={scrollRef}/>}
+        {tab==='library'&&<Library showDeg={showDeg} setShowDeg={setShowDeg} mastered={mastered} onToggleMastered={onToggleMastered} scrollRef={scrollRef}/>}
         {tab==='progs'&&<ProgressionsTab showDeg={showDeg}/>}
         {tab==='quiz'&&<QuizTab showDeg={showDeg} onChordQuizDone={onChordQuizDone} onDegDone={onDegDone}/>}
         {tab==='weak'&&<WeakTab history={hist} degHist={degHist} srs={srs} showDeg={showDeg} onComplete={onChordQuizDone}/>}
