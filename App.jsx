@@ -1350,7 +1350,7 @@ function ProgressionsTab({showDeg}){
 // ── CHORD DETAIL ─────────────────────────────────────────────────────────
 // Standalone detail view — shared by Library and ChordsOfDay.
 // Automatically enables Scale Degrees while open and restores prior state.
-function ChordDetail({chord,onBack,showDeg,setShowDeg,mastered,onToggleMastered,scrollRef}){
+function ChordDetail({chord,onBack,showDeg,setShowDeg,mastered,onToggleMastered}){
   const[transRoot,setTransRoot]=useState(null);
   // Local state so the button reflects instantly — parent's mastered prop may
   // not propagate if ChordDetail is inside a memo'd component (ChordsOfDay).
@@ -1359,14 +1359,7 @@ function ChordDetail({chord,onBack,showDeg,setShowDeg,mastered,onToggleMastered,
   useEffect(()=>{
     const prev=showDeg;
     setShowDeg(true);
-    // Save scroll position then jump to top
-    const el=scrollRef&&scrollRef.current;
-    const savedY=el?el.scrollTop:0;
-    if(el)el.scrollTop=0;
-    return()=>{
-      setShowDeg(prev);
-      if(el)requestAnimationFrame(()=>{el.scrollTop=savedY;});
-    };
+    return()=>setShowDeg(prev);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
 
@@ -1477,6 +1470,8 @@ function ChordDetail({chord,onBack,showDeg,setShowDeg,mastered,onToggleMastered,
 function Library({showDeg,setShowDeg,mastered,onToggleMastered,scrollRef}){
   const[cat,setCat]=useState('all');
   const[sel,setSel]=useState(null);
+  const[search,setSearch]=useState('');
+  const savedScrollY=useRef(0);
   const[transRoot,setTransRoot]=useState(null);
   const[filterOpen,setFilterOpen]=useState(true);
   const[filterMode,setFilterMode]=useState('family');
@@ -1519,10 +1514,14 @@ function Library({showDeg,setShowDeg,mastered,onToggleMastered,scrollRef}){
   },[cat,filterMode,family,bTriad,bSeventh,bExts]);
 
   const chord=sel?CHORDS.find(c=>c.id===sel):null;
-  const handleSel=id=>{setSel(id);setTransRoot(null);};
+  const handleSel=id=>{
+    savedScrollY.current=scrollRef&&scrollRef.current?scrollRef.current.scrollTop:0;
+    if(scrollRef&&scrollRef.current)scrollRef.current.scrollTop=0;
+    setSel(id);setTransRoot(null);
+  };
 
   if(chord){
-    return <ChordDetail chord={chord} onBack={()=>{setSel(null);setTransRoot(null);}} showDeg={showDeg} setShowDeg={setShowDeg} mastered={mastered} onToggleMastered={onToggleMastered} scrollRef={scrollRef}/>;
+    return <ChordDetail chord={chord} onBack={()=>{setSel(null);setTransRoot(null);requestAnimationFrame(()=>{if(scrollRef&&scrollRef.current)scrollRef.current.scrollTop=savedScrollY.current;});}} showDeg={showDeg} setShowDeg={setShowDeg} mastered={mastered} onToggleMastered={onToggleMastered}/>;
   }
 
   // ── Helper: chord type strip (shared by both filter modes)
@@ -1854,6 +1853,7 @@ const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkRe
   const[srsSnap]=useState(()=>({...srsData}));
   const[reviewed,setReviewed]=useState(new Set());
   const[selChord,setSelChord]=useState(null);
+  const savedScrollY=useRef(0);
 
   const mark=useCallback(id=>{
     setReviewed(p=>new Set([...p,id]));
@@ -1862,7 +1862,7 @@ const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkRe
 
   // When a chord detail is open, render it (ChordDetail handles auto-showDeg internally)
   if(selChord){
-    return <ChordDetail chord={selChord} onBack={()=>setSelChord(null)} showDeg={showDeg} setShowDeg={setShowDeg} mastered={mastered} onToggleMastered={onToggleMastered} scrollRef={scrollRef}/>;
+    return <ChordDetail chord={selChord} onBack={()=>{setSelChord(null);requestAnimationFrame(()=>{if(scrollRef&&scrollRef.current)scrollRef.current.scrollTop=savedScrollY.current;});}} showDeg={showDeg} setShowDeg={setShowDeg} mastered={mastered} onToggleMastered={onToggleMastered}/>;
   }
 
   return(<div>
@@ -1906,7 +1906,7 @@ const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkRe
                 }}>
                   <div style={{fontSize:'13px',fontWeight:900,color:'#444',minWidth:'13px',textAlign:'center'}}>{idx+1}</div>
                   {/* Tappable area — opens chord detail */}
-                  <div onClick={()=>setSelChord(chord)} style={{display:'flex',alignItems:'center',gap:'9px',flex:1,minWidth:0,cursor:'pointer',touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
+                  <div onClick={()=>{savedScrollY.current=scrollRef&&scrollRef.current?scrollRef.current.scrollTop:0;if(scrollRef&&scrollRef.current)scrollRef.current.scrollTop=0;setSelChord(chord);}} style={{display:'flex',alignItems:'center',gap:'9px',flex:1,minWidth:0,cursor:'pointer',touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
                     <ChordDiagram v={chord.voicings[0]} showDeg={showDeg} size={0.76}/>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{display:'flex',alignItems:'center',gap:'4px',flexWrap:'wrap',marginBottom:'1px'}}>
@@ -2586,7 +2586,7 @@ export default function App(){
       )}
       {/* Tab bar — 44px min-height per Apple HIG; overflowX hidden but scrollable to avoid clipping */}
       <div style={{display:'flex',borderBottom:'1px solid #1a1928',overflowX:'auto',WebkitOverflowScrolling:'touch',scrollbarWidth:'none'}}>
-        {TABS.map(t=>(<button key={t.id} onClick={()=>setTab(t.id)} style={{flex:'0 0 auto',padding:'10px 10px',background:'transparent',border:'none',cursor:'pointer',fontSize:'10px',fontWeight:600,color:tab===t.id?'#ffd93d':'#888',borderBottom:tab===t.id?'2px solid #ffd93d':'2px solid transparent',whiteSpace:'nowrap',minHeight:'44px',touchAction:'manipulation'}}>{t.icon} {t.label}</button>))}
+        {TABS.map(t=>(<button key={t.id} onClick={()=>{setTab(t.id);if(scrollRef.current)scrollRef.current.scrollTop=0;}} style={{flex:'0 0 auto',padding:'10px 10px',background:'transparent',border:'none',cursor:'pointer',fontSize:'10px',fontWeight:600,color:tab===t.id?'#ffd93d':'#888',borderBottom:tab===t.id?'2px solid #ffd93d':'2px solid transparent',whiteSpace:'nowrap',minHeight:'44px',touchAction:'manipulation'}}>{t.icon} {t.label}</button>))}
       </div>
       {/* Safe-area bottom padding + extra room for install banner */}
       {/* Scrollable content — flex:1 takes remaining height below header+tabbar */}
