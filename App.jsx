@@ -692,6 +692,9 @@ function midiToHz(m){return 440*Math.pow(2,(m-69)/12);}
 // No DOM events, no timing issues, no Strict Mode double-fire problems.
 let _onFirstPlay=null;
 let _firstPlayFired=false;
+// Debug trigger callbacks — set by App, called by DebugPanel
+let _debugShowAudio=null;
+let _debugShowInstall=null;
 function playVoicing(v,mode){
   unlockAudio();
   if(!_firstPlayFired){
@@ -2176,6 +2179,17 @@ function DebugPanel(){
           style={{fontSize:'9px',color:'#ff6b6b',background:'transparent',border:'1px solid #ff6b6b44',borderRadius:'5px',padding:'4px 10px',cursor:'pointer',minHeight:'32px',touchAction:'manipulation'}}>
           Clear all & reload
         </button>
+        <button onClick={()=>{if(_debugShowAudio)_debugShowAudio();}}
+          style={{fontSize:'9px',color:'#ffd93d',background:'transparent',border:'1px solid #ffd93d44',borderRadius:'5px',padding:'4px 10px',cursor:'pointer',minHeight:'32px',touchAction:'manipulation'}}>
+          Show unmute hint
+        </button>
+        <button onClick={()=>{
+          try{localStorage.removeItem('ct_launches');sessionStorage.removeItem('ct_launched');}catch(e){}
+          location.reload();
+        }}
+          style={{fontSize:'9px',color:'#74b9ff',background:'transparent',border:'1px solid #74b9ff44',borderRadius:'5px',padding:'4px 10px',cursor:'pointer',minHeight:'32px',touchAction:'manipulation'}}>
+          Show install banner
+        </button>
       </div>
     </div>
   );
@@ -2296,6 +2310,9 @@ export default function App(){
   histRef.current=hist;
   degHistRef.current=degHist;
   masteredRef.current=mastered;
+  // Wire debug triggers — allows DebugPanel to force-show notifications
+  _debugShowAudio=()=>setShowAudioHint(true);
+  _debugShowInstall=null; // install banner is in BannerStack, trigger via localStorage reset
 
   // ── Audio hint: wire _onFirstPlay from App's React tree ──────────────
   // Registering here (not in a fixed-position component) means the callback
