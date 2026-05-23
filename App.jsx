@@ -2219,6 +2219,14 @@ function HelpTab(){
   ];
   return(
     <div style={{padding:'14px',maxWidth:'560px',margin:'0 auto'}}>
+      <a href="https://ko-fi.com/syncopatedsyntax" target="_blank" rel="noopener noreferrer"
+        style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',
+          background:'#FF5E5B',color:'#fff',borderRadius:'11px',padding:'12px 20px',
+          textDecoration:'none',fontWeight:800,fontSize:'14px',
+          boxShadow:'0 4px 14px #FF5E5B55',marginBottom:'10px',
+          touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
+        <span style={{fontSize:'18px'}}>☕</span> Buy me a coffee
+      </a>
       <div style={{fontSize:'15px',fontWeight:900,color:'#fff',marginBottom:'8px'}}>App Features</div>
       <div style={{display:'flex',flexDirection:'column',gap:'5px',marginBottom:'20px'}}>
         {sections.map((s,i)=>(
