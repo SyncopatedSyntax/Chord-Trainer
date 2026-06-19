@@ -6,6 +6,9 @@ import PROGS_RN from "./data/progressions.json";
 import { Q_SUFFIX, BROAD_CATS, FEEL_TO_CAT, getChordName, voicingForSlot, buildChordIndex } from "./data/progressions.js";
 import ChordDiagram from "./components/ChordDiagram.jsx";
 
+// Build stamp injected by vite (define) — shown in Settings → App Updates.
+const BUILD_ID = typeof __BUILD_ID__ !== 'undefined' ? __BUILD_ID__ : 'dev';
+
 const PROGS=[
   {title:'ii–V–I · C major',feel:'Jazz',desc:'The cornerstone of jazz. Dm7 creates tension, G7 raises it, Cmaj7 resolves.',chords:[{sym:'Dm7',rn:'ii',v:{str:[-1,5,3,5,-1,-1],deg:[null,'R','b3','b7',null,null],sf:3}},{sym:'G7',rn:'V',v:{str:[3,-1,3,4,-1,-1],deg:['R',null,'b7','3',null,null],sf:1}},{sym:'Cmaj7',rn:'I',v:{str:[-1,3,2,4,-1,-1],deg:[null,'R','3','7',null,null],sf:1}}]},
   {title:'I–VI–ii–V · C major',feel:'Jazz',desc:'Classic turnaround — relative minor and subdominant before resolving.',chords:[{sym:'Cmaj7',rn:'I',v:{str:[-1,3,2,4,-1,-1],deg:[null,'R','3','7',null,null],sf:1}},{sym:'Am7',rn:'vi',v:{str:[5,-1,5,5,-1,-1],deg:['R',null,'b7','b3',null,null],sf:5}},{sym:'Dm7',rn:'ii',v:{str:[-1,5,3,5,-1,-1],deg:[null,'R','b3','b7',null,null],sf:3}},{sym:'G7',rn:'V',v:{str:[3,-1,3,4,-1,-1],deg:['R',null,'b7','3',null,null],sf:1}}]},
@@ -1634,6 +1637,7 @@ function SettingsTab(){
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:'13px',fontWeight:700,color:'#fff'}}>App Updates</div>
           <div style={{fontSize:'11px',color:'#888',marginTop:'2px',lineHeight:'1.4'}}>{updating?'Checking for a new version and reloading…':'Installed and works offline. Tap Update to load the newest version when one is available.'}</div>
+          <div style={{fontSize:'10px',color:'#555',marginTop:'4px',fontFamily:'monospace'}}>Build {BUILD_ID}</div>
         </div>
         <button onClick={onUpdate} disabled={updating}
           style={{background:'#ffd93d',color:'#111',border:'none',padding:'9px 14px',borderRadius:'9px',

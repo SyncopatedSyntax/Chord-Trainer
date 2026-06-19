@@ -6,7 +6,13 @@ import { fileURLToPath } from 'url'
 // Absolute paths avoid a Windows path-normalization bug in multi-page input.
 const r = p => fileURLToPath(new URL(p, import.meta.url))
 
+// Build stamp shown in Settings → App Updates, so a user can confirm an update
+// actually landed. Auto-bumps every build; injected via `define` below.
+const BUILD_ID = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC'
+
 export default defineConfig({
+  // Replaced at build time (and in dev) wherever __BUILD_ID__ appears in source.
+  define: { __BUILD_ID__: JSON.stringify(BUILD_ID) },
   // Multi-page: the trainer (index.html) and the standalone chord editor
   // (editor.html), which share data/ and components/.
   build: {
