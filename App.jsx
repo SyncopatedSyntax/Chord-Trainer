@@ -1778,6 +1778,38 @@ function DebugPanel(){
   );
 }
 
+function SettingsTab(){
+  return(
+    <div style={{padding:'14px',maxWidth:'560px',margin:'0 auto'}}>
+      <div style={{fontSize:'15px',fontWeight:900,color:'#fff',marginBottom:'10px'}}>Settings</div>
+      {/* ── App version / update ── */}
+      <div style={{background:'#13121f',borderRadius:'11px',border:'1px solid #2a2840',padding:'11px 12px',marginBottom:'10px',display:'flex',alignItems:'center',gap:'10px'}}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:'13px',fontWeight:700,color:'#fff'}}>App Updates</div>
+          <div style={{fontSize:'11px',color:'#888',marginTop:'2px',lineHeight:'1.4'}}>Installed and works offline. Tap Update to load the newest version when one is available.</div>
+        </div>
+        <button onClick={reloadApp}
+          style={{background:'#ffd93d',color:'#111',border:'none',padding:'9px 14px',borderRadius:'9px',
+            fontSize:'12px',fontWeight:800,cursor:'pointer',minHeight:'40px',whiteSpace:'nowrap',
+            touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>↻ Update</button>
+      </div>
+      {/* ── Chord editor link ── */}
+      <div style={{background:'#13121f',borderRadius:'11px',border:'1px solid #2a2840',padding:'11px 12px',marginBottom:'10px',display:'flex',alignItems:'center',gap:'10px'}}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:'13px',fontWeight:700,color:'#fff'}}>🎛 Chord Editor</div>
+          <div style={{fontSize:'11px',color:'#888',marginTop:'2px',lineHeight:'1.4'}}>Add or edit chord shapes — no coding. Degrees auto-derive from the fretboard.</div>
+        </div>
+        <a href="/editor.html" target="_blank" rel="noopener noreferrer"
+          style={{background:'#a29bfe',color:'#111',textDecoration:'none',padding:'9px 14px',borderRadius:'9px',
+            fontSize:'12px',fontWeight:800,minHeight:'40px',whiteSpace:'nowrap',display:'flex',alignItems:'center',
+            touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>Open ↗</a>
+      </div>
+      {/* ── DEBUG ── */}
+      <DebugPanel/>
+    </div>
+  );
+}
+
 function HelpTab(){
   const[openTier,setOpenTier]=useState(null);
   const toggleTier=id=>setOpenTier(cur=>cur===id?null:id);
@@ -1802,28 +1834,6 @@ function HelpTab(){
   ];
   return(
     <div style={{padding:'14px',maxWidth:'560px',margin:'0 auto'}}>
-      {/* ── App version / update ── */}
-      <div style={{background:'#13121f',borderRadius:'11px',border:'1px solid #2a2840',padding:'11px 12px',marginBottom:'10px',display:'flex',alignItems:'center',gap:'10px'}}>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:'13px',fontWeight:700,color:'#fff'}}>App Updates</div>
-          <div style={{fontSize:'11px',color:'#888',marginTop:'2px',lineHeight:'1.4'}}>Installed and works offline. Tap Update to load the newest version when one is available.</div>
-        </div>
-        <button onClick={reloadApp}
-          style={{background:'#ffd93d',color:'#111',border:'none',padding:'9px 14px',borderRadius:'9px',
-            fontSize:'12px',fontWeight:800,cursor:'pointer',minHeight:'40px',whiteSpace:'nowrap',
-            touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>↻ Update</button>
-      </div>
-      {/* ── Chord editor link ── */}
-      <div style={{background:'#13121f',borderRadius:'11px',border:'1px solid #2a2840',padding:'11px 12px',marginBottom:'10px',display:'flex',alignItems:'center',gap:'10px'}}>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:'13px',fontWeight:700,color:'#fff'}}>🎛 Chord Editor</div>
-          <div style={{fontSize:'11px',color:'#888',marginTop:'2px',lineHeight:'1.4'}}>Add or edit chord shapes — no coding. Degrees auto-derive from the fretboard.</div>
-        </div>
-        <a href="/editor.html" target="_blank" rel="noopener noreferrer"
-          style={{background:'#a29bfe',color:'#111',textDecoration:'none',padding:'9px 14px',borderRadius:'9px',
-            fontSize:'12px',fontWeight:800,minHeight:'40px',whiteSpace:'nowrap',display:'flex',alignItems:'center',
-            touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>Open ↗</a>
-      </div>
       <a href="https://ko-fi.com/syncopatedsyntax" target="_blank" rel="noopener noreferrer"
         style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',
           background:'#FF5E5B',color:'#fff',borderRadius:'11px',padding:'12px 20px',
@@ -1892,8 +1902,6 @@ function HelpTab(){
           );
         })}
       </div>
-      {/* ── DEBUG ── */}
-      <DebugPanel/>
       <div style={{textAlign:'center',padding:'10px',background:'#13121f',borderRadius:'10px',border:'1px solid #2a2840'}}>
         <div style={{fontSize:'12px',color:'#555'}}>Made with 🎸 by <span style={{color:'#ffd93d',fontWeight:700}}>Zak</span></div>
       </div>
@@ -2194,7 +2202,7 @@ export default function App(){
 
   if(!loaded)return(<div style={{background:'#0f0e17',minHeight:'100vh',minHeight:'-webkit-fill-available',display:'flex',alignItems:'center',justifyContent:'center',color:'#ffd93d',fontSize:'16px'}}>Loading…</div>);
 
-  const TABS=[{id:'daily',label:'Today',icon:'🌅'},{id:'library',label:'Library',icon:'📚'},{id:'progs',label:'Progs',icon:'🎵'},{id:'quiz',label:'Quiz',icon:'🎯'},{id:'weak',label:'Weak',icon:'💪'},{id:'help',label:'Guide',icon:'📖'}];
+  const TABS=[{id:'daily',label:'Today',icon:'🌅'},{id:'library',label:'Library',icon:'📚'},{id:'progs',label:'Progs',icon:'🎵'},{id:'quiz',label:'Quiz',icon:'🎯'},{id:'weak',label:'Weak',icon:'💪'},{id:'help',label:'Guide',icon:'📖'},{id:'settings',label:'Settings',icon:'⚙️'}];
 
   return(
     <div style={{background:'#0f0e17',height:'100dvh',display:'flex',flexDirection:'column',color:'#fffffe',fontFamily:"'Segoe UI',system-ui,sans-serif",WebkitFontSmoothing:'antialiased',paddingTop:'env(safe-area-inset-top)'}}>
@@ -2233,6 +2241,7 @@ export default function App(){
         {tab==='quiz'&&<QuizTab showDeg={showDeg} onChordQuizDone={onChordQuizDone} onDegDone={onDegDone}/>}
         {tab==='weak'&&<WeakTab history={hist} degHist={degHist} srs={srs} showDeg={showDeg} onComplete={onChordQuizDone}/>}
         {tab==='help'&&<HelpTab/>}
+        {tab==='settings'&&<SettingsTab/>}
       {showAudioHint&&(
           <AudioHintPanel
             onDismiss10={()=>{
