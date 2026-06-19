@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo, useCallback, useRef, memo } from "react";
 import { reloadApp } from "./pwa.js";
 import CHORDS from "./data/chords.json";
 import { OPEN_MIDI, NOTE_NAMES, DC, CATS, DEG_HINT } from "./data/theory.js";
+import PROGS_RN from "./data/progressions.json";
+import { Q_SUFFIX, BROAD_CATS, FEEL_TO_CAT, getChordName, voicingForSlot, buildChordIndex } from "./data/progressions.js";
 import ChordDiagram from "./components/ChordDiagram.jsx";
 
 const PROGS=[
@@ -123,22 +125,7 @@ const EXT_TESTS={
 
 
 
-const FEEL_TO_CAT={
-  'Jazz':'Jazz','Bebop':'Jazz','Bebop/Modern':'Jazz','Jazz Standard':'Jazz','Jazz Waltz':'Jazz','Modal Jazz':'Jazz','Jazz / Fusion':'Jazz','Jazz Comping':'Jazz','Jazz Fusion':'Jazz','Jazz Minor':'Jazz','Smooth Jazz':'Jazz',
-  'Blues':'Blues','Gospel/Blues':'Blues','Minor Blues':'Blues',
-  'Pop':'Rock & Pop','Pop/50s':'Rock & Pop','Pop/Soul':'Rock & Pop','Pop / Soul':'Rock & Pop','Pop/Rock':'Rock & Pop','Folk/Country':'Rock & Pop','Rock':'Rock & Pop','Rock/Classical':'Rock & Pop','Rock/Modal':'Rock & Pop','Rock / Classical':'Rock & Pop','Classical/Pop':'Rock & Pop',
-  'R&B/Soul':'Soul & R&B','Neo-Soul/R&B':'Soul & R&B','Neo-Soul':'Soul & R&B','Neo-Soul / R&B':'Soul & R&B','Funk/Soul':'Soul & R&B','Gospel':'Soul & R&B','Soul/R&B':'Soul & R&B',
-  'Bossa Nova':'Latin','Samba':'Latin','Samba / Brazilian':'Latin','Flamenco':'Latin','Tango':'Latin',
-  'Classical':'Classical',
-};
-const BROAD_CATS=[
-  {id:'Jazz',label:'Jazz',emoji:'🎷',color:'#a29bfe'},
-  {id:'Blues',label:'Blues',emoji:'🎸',color:'#ff6b6b'},
-  {id:'Rock & Pop',label:'Rock & Pop',emoji:'🎵',color:'#ffd93d'},
-  {id:'Soul & R&B',label:'Soul & R&B',emoji:'🎹',color:'#fd79a8'},
-  {id:'Latin',label:'Latin',emoji:'🪗',color:'#00b894'},
-  {id:'Classical',label:'Classical',emoji:'🎼',color:'#74b9ff'},
-];
+// FEEL_TO_CAT and BROAD_CATS now live in data/progressions.js (imported above).
 
 // ── PERSISTENT STORAGE ───────────────────────────────────────────────────
 // localStorage persists across sessions in standalone PWA (home screen launch).
@@ -581,49 +568,8 @@ function QuizTab({showDeg,onChordQuizDone,onDegDone}){
   </div>);
 }
 
-const RN_OFFSETS={
-  'I':0,'bII':1,'II':2,'bIII':3,'III':4,'IV':5,'bV':6,'V':7,'bVI':8,'VI':9,'bVII':10,'VII':11,
-  'i':0,'bii':1,'ii':2,'biii':3,'iii':4,'iv':5,'bv':6,'v':7,'bvi':8,'vi':9,'bvii':10,'vii':11,
-};
-const Q_SUFFIX={
-  'maj7':'maj7','m7':'m7','7':'7','maj':'','min':'m','m7b5':'m7b5',
-  'dim7':'dim7','7b9':'7b9','9':'9','maj9':'maj9','m9':'m9',
-  '6':'6','7sus4':'7sus4','m6':'m6','sus2':'sus2','sus4':'sus4',
-  'aug':'+','9sus4':'9sus4','13sus4':'13sus4','maj7s5':'maj7#5',
-  'm13':'m13','maj9s11':'maj9#11','9s11':'9#11','mMaj7':'(Δ7)',
-};
-const QTMPL={
-  // All templates rooted at C — A string fret 3 = MIDI 48 = C
-  // ── Seventh chords: shell / 4-string — the jazz comping vocabulary ──────
-  'maj7':   {str:[-1,3,2,4,-1,-1],deg:[null,'R','3','7',null,null],sf:1},
-  'm7':     {str:[-1,3,1,3,-1,-1],deg:[null,'R','b3','b7',null,null],sf:1},
-  '7':      {str:[-1,3,2,3,-1,-1],deg:[null,'R','3','b7',null,null],sf:1},
-  'm7b5':   {str:[-1,3,4,3,-1,-1],deg:[null,'R','b5','b7',null,null],sf:3},
-  'dim7':   {str:[-1,3,4,2,4,-1],deg:[null,'R','b5','bb7','b3',null],sf:2},
-  '7b9':    {str:[-1,3,2,3,2,-1],deg:[null,'R','3','b7','b9',null],sf:2},
-  '9':      {str:[-1,3,2,3,3,-1],deg:[null,'R','3','b7','9',null],sf:1},
-  'maj9':   {str:[-1,3,2,4,3,-1],deg:[null,'R','3','7','9',null],sf:1},
-  'm9':     {str:[-1,3,1,3,3,-1],deg:[null,'R','b3','b7','9',null],sf:1},
-  '7sus4':  {str:[-1,3,3,3,-1,-1],deg:[null,'R','4','b7',null,null],sf:3},
-  '6':      {str:[-1,3,2,2,3,-1],deg:[null,'R','3','6','9',null],sf:2},
-  'm6':     {str:[-1,3,1,2,-1,-1],deg:[null,'R','b3','6',null,null],sf:1},
-  '9sus4':  {str:[-1,3,3,3,3,-1],deg:[null,'R','4','b7','9',null],sf:3},
-  'aug':    {str:[-1,3,2,1,-1,-1],deg:[null,'R','3','#5',null,null],sf:1},
-  'maj7s5': {str:[3,2,4,-1,4,-1],deg:['R','3','7',null,'#5',null],sf:2},
-  'mMaj7':  {str:[-1,3,1,4,-1,-1],deg:[null,'R','b3','7',null,null],sf:1},
-  // ── Triads: COMPACT 4-string on 5-4-3-2 (no top-e barre) ───────────────
-  // These are the shapes advanced rock, soul, and fusion players use —
-  // not the full 6-string cowboy barre. Cleaner on-neck sound.
-  // C major: A3=C(R):48✓, D5=G(5):55✓, G5=C(R):60✓, B5=E(3):64✓
-  'maj':    {str:[-1,3,5,5,5,-1],deg:[null,'R','5','R','3',null],sf:3},
-  // C minor: A3=C(R):48✓, D5=G(5):55✓, G5=C(R):60✓, B4=Eb(b3):63✓
-  'min':    {str:[-1,3,5,5,4,-1],deg:[null,'R','5','R','b3',null],sf:3},
-  // C sus2: B3=D(2):62✓ (2nd of C=D✓)
-  'sus2':   {str:[-1,3,5,5,3,-1],deg:[null,'R','5','R','2',null],sf:3},
-  // C sus4: B6=F(4):65✓ (4th of C=F✓)
-  'sus4':   {str:[-1,3,5,5,6,-1],deg:[null,'R','5','R','4',null],sf:3},
-};
-const TMPL_ROOT=0;
+// RN_OFFSETS, Q_SUFFIX, QTMPL, TMPL_ROOT now live in data/progressions.js.
+// Q_SUFFIX is imported above; the rest are used only by the imported helpers.
 
 // ── COWBOY VOICING MAP ────────────────────────────────────────────────────
 // Precomputed at startup: maps `noteIndex_quality` → open/cowboy voicing.
@@ -649,120 +595,15 @@ const COWBOY_MAP=(()=>{
   return map;
 })();
 
-function transposeFromTemplate(tmpl,targetNote){
-  const shift=((targetNote-TMPL_ROOT)+12)%12;
-  if(shift===0)return{...tmpl,label:''};
-  const newStr=tmpl.str.map(f=>f>0?f+shift:f);
-  const active=newStr.filter(f=>f>0);
-  return{...tmpl,str:newStr,sf:active.length>0?Math.min(...active):1,label:''};
-}
-function getChordName(keyNote,rnStr,quality){
-  const offset=RN_OFFSETS[rnStr]||0;
-  const noteIdx=(keyNote+offset+12)%12;
-  const sfx=Q_SUFFIX[quality]!==undefined?Q_SUFFIX[quality]:quality;
-  return NOTE_NAMES[noteIdx]+sfx;
-}
-function getVoicing(keyNote,rnStr,quality,useCowboy=false){
-  const offset=RN_OFFSETS[rnStr]||0;
-  const targetNote=(keyNote+offset+12)%12;
-  // Open-position mode: try cowboy lookup first
-  if(useCowboy){
-    const cv=COWBOY_MAP[`${targetNote}_${quality}`];
-    if(cv)return cv;
-  }
-  const tmpl=QTMPL[quality];
-  if(!tmpl)return null;
-  return transposeFromTemplate(tmpl,targetNote);
-}
+// id → chord lookup, so a progression slot can resolve a chosen movable shape.
+const CHORD_INDEX=buildChordIndex(CHORDS);
 
-const PROGS_RN=[
-  {title:'ii–V–I',feel:'Jazz',desc:'The cornerstone of jazz. ii creates tension, V raises it, I resolves.',chords:[{rn:'ii',q:'m7'},{rn:'V',q:'7'},{rn:'I',q:'maj7'}]},
-  {title:'I–VI–ii–V',feel:'Jazz',desc:'Classic turnaround moving through the relative minor and subdominant.',chords:[{rn:'I',q:'maj7'},{rn:'VI',q:'7'},{rn:'ii',q:'m7'},{rn:'V',q:'7'}]},
-  {title:'iii–VI–ii–V',feel:'Jazz',desc:'Extended turnaround starting on the mediant. Common in AABA forms.',chords:[{rn:'iii',q:'m7'},{rn:'VI',q:'7'},{rn:'ii',q:'m7'},{rn:'V',q:'7'}]},
-  {title:'I–IV–iii–VI–ii–V–I',feel:'Jazz',desc:'Long-form turnaround through the full diatonic cycle. Heard in standards like Misty.',chords:[{rn:'I',q:'maj7'},{rn:'IV',q:'maj7'},{rn:'iii',q:'m7'},{rn:'VI',q:'7'},{rn:'ii',q:'m7'},{rn:'V',q:'7'},{rn:'I',q:'maj7'}]},
-  {title:'Minor ii–V–i',feel:'Jazz',desc:'Dark jazz minor cadence. Half-diminished creates tritone tension, altered dominant resolves.',chords:[{rn:'ii',q:'m7b5'},{rn:'V',q:'7b9'},{rn:'i',q:'m7'}]},
-  {title:'Minor i–VI–ii–V',feel:'Jazz',desc:'Minor key turnaround. The bVI gives it its distinctively dark, cinematic quality.',chords:[{rn:'i',q:'m7'},{rn:'bVI',q:'maj7'},{rn:'ii',q:'m7b5'},{rn:'V',q:'7b9'}]},
-  {title:'Backdoor ii–V',feel:'Jazz',desc:'bVII7 approaches I from below — the "backdoor" substitution for the standard V.',chords:[{rn:'I',q:'maj7'},{rn:'bVII',q:'7'},{rn:'IV',q:'maj7'},{rn:'I',q:'maj7'}]},
-  {title:'Tritone Substitution',feel:'Jazz',desc:'bII7 replaces V7. The tritone relationship creates a smooth chromatic bass descent.',chords:[{rn:'ii',q:'m7'},{rn:'bII',q:'7'},{rn:'I',q:'maj7'}]},
-  {title:'I–II7–V–I',feel:'Jazz',desc:'Secondary dominant II7 briefly tonicises V before resolving.',chords:[{rn:'I',q:'maj7'},{rn:'II',q:'7'},{rn:'V',q:'7'},{rn:'I',q:'maj7'}]},
-  {title:'Coltrane Changes',feel:'Jazz',desc:'Three Imaj7 chords a major 3rd apart, each with its V7. A cycle that shook jazz harmony.',chords:[{rn:'I',q:'maj7'},{rn:'III',q:'7'},{rn:'bVI',q:'maj7'},{rn:'I',q:'7'},{rn:'IV',q:'maj7'},{rn:'bVI',q:'7'}]},
-  {title:'Rhythm Changes · A section',feel:'Jazz',desc:"I–VI–ii–V in Bb — Gershwin's I Got Rhythm, backbone of bebop for 80+ years.",chords:[{rn:'I',q:'maj7'},{rn:'VI',q:'7'},{rn:'ii',q:'m7'},{rn:'V',q:'7'}]},
-  {title:'Rhythm Changes · B section',feel:'Jazz',desc:'III7–VI7–II7–V7 — a chain of secondary dominants descending the circle of 5ths.',chords:[{rn:'III',q:'7'},{rn:'VI',q:'7'},{rn:'II',q:'7'},{rn:'V',q:'7'}]},
-  {title:'Jazz Waltz · I–VI–ii–V',feel:'Jazz',desc:'Classic turnaround in 3/4. The lilting feel gives familiar harmony new life.',chords:[{rn:'I',q:'maj7'},{rn:'VI',q:'7'},{rn:'ii',q:'m7'},{rn:'V',q:'7'}]},
-  {title:'So What / Modal Vamp',feel:'Jazz',desc:'i7 with a brief shift to bii7. Floating Dorian quality with no strong resolution.',chords:[{rn:'i',q:'m7'},{rn:'bii',q:'m7'}]},
-  {title:'Dorian Vamp · i–IV',feel:'Jazz',desc:'Minor i7 to IV7. The major IV chord gives the Dorian mode its characteristic bright colour.',chords:[{rn:'i',q:'m7'},{rn:'IV',q:'7'}]},
-  {title:'Autumn Leaves',feel:'Jazz',desc:'ii–V–I–IV descending through the cycle of 4ths. The most used standard template.',chords:[{rn:'ii',q:'m7'},{rn:'V',q:'7'},{rn:'I',q:'maj7'},{rn:'IV',q:'maj7'}]},
-  {title:'Misty · opening',feel:'Jazz',desc:'Imaj7–bIII7–ii–V. The unexpected bIII7 secondary dominant gives Misty its lush opening.',chords:[{rn:'I',q:'maj7'},{rn:'bIII',q:'7'},{rn:'ii',q:'m7'},{rn:'V',q:'7'}]},
-  {title:'12-Bar Blues',feel:'Blues',desc:'The foundation. I7–IV7–V7 pattern. Infinite expression.',chords:[{rn:'I',q:'7'},{rn:'IV',q:'7'},{rn:'V',q:'7'}]},
-  {title:'Quick Change Blues',feel:'Blues',desc:'Bar 2 jumps to IV7 then back to I7. Creates extra movement in the first four bars.',chords:[{rn:'I',q:'7'},{rn:'IV',q:'7'},{rn:'I',q:'7'},{rn:'V',q:'7'}]},
-  {title:'Minor Blues',feel:'Blues',desc:'The darker sibling. i7–iv7–V7b9 gives a melancholic, soulful quality.',chords:[{rn:'i',q:'m7'},{rn:'iv',q:'m7'},{rn:'V',q:'7b9'}]},
-  {title:'Jazz Blues',feel:'Blues',desc:'Blues with jazz ii–V substitutions into IV. The Bird and Monk standard template.',chords:[{rn:'I',q:'7'},{rn:'IV',q:'7'},{rn:'ii',q:'m7'},{rn:'V',q:'7'},{rn:'I',q:'7'},{rn:'bVII',q:'7'}]},
-  {title:'8-Bar Blues',feel:'Blues',desc:'Compact form: I–V–IV–I. Common in country blues and early rock.',chords:[{rn:'I',q:'7'},{rn:'V',q:'7'},{rn:'IV',q:'7'},{rn:'I',q:'7'}]},
-  {title:'I–V–vi–IV',feel:'Pop',desc:'The "axis" progression. Underlies hundreds of hit songs across every era of pop music.',chords:[{rn:'I',q:'maj'},{rn:'V',q:'maj'},{rn:'vi',q:'min'},{rn:'IV',q:'maj'}]},
-  {title:'vi–IV–I–V',feel:'Pop',desc:'Axis starting on the relative minor. Same four chords, distinctly darker feel.',chords:[{rn:'vi',q:'min'},{rn:'IV',q:'maj'},{rn:'I',q:'maj'},{rn:'V',q:'maj'}]},
-  {title:'I–IV–V',feel:'Folk/Country',desc:'Three chords, a million songs. The backbone of folk, country, and rock n roll.',chords:[{rn:'I',q:'maj'},{rn:'IV',q:'maj'},{rn:'V',q:'maj'}]},
-  {title:'I–vi–IV–V',feel:'Pop',desc:'The "50s progression". Doo-wop, early rock and roll, and countless ballads.',chords:[{rn:'I',q:'maj'},{rn:'vi',q:'min'},{rn:'IV',q:'maj'},{rn:'V',q:'maj'}]},
-  {title:'I–V–vi–iii–IV',feel:'Pop',desc:'Extended pop loop. The iii minor adds unexpected depth before landing on IV.',chords:[{rn:'I',q:'maj'},{rn:'V',q:'maj'},{rn:'vi',q:'min'},{rn:'iii',q:'min'},{rn:'IV',q:'maj'}]},
-  {title:'I–iii–IV–V',feel:'Pop',desc:'The mediant iii creates a flowing, optimistic quality heard in soul and pop classics.',chords:[{rn:'I',q:'maj'},{rn:'iii',q:'min'},{rn:'IV',q:'maj'},{rn:'V',q:'maj'}]},
-  {title:'I–ii–IV–V',feel:'Pop',desc:'The ii minor adds a jazzy stepping-stone between I and IV. Smooth and melodic.',chords:[{rn:'I',q:'maj'},{rn:'ii',q:'min'},{rn:'IV',q:'maj'},{rn:'V',q:'maj'}]},
-  {title:'IV–I–V–vi',feel:'Pop',desc:'Axis starting on IV. Opens with an immediate uplifting, anthemic feel.',chords:[{rn:'IV',q:'maj'},{rn:'I',q:'maj'},{rn:'V',q:'maj'},{rn:'vi',q:'min'}]},
-  {title:'I–bVII–IV',feel:'Rock',desc:'Borrowing bVII from Mixolydian gives rock its raw, anthemic quality. Hendrix to Oasis.',chords:[{rn:'I',q:'maj'},{rn:'bVII',q:'maj'},{rn:'IV',q:'maj'}]},
-  {title:'i–bVII–bVI–V',feel:'Rock',desc:'Natural minor descent. From Flamenco to metal to film scores — dark and inevitable.',chords:[{rn:'i',q:'min'},{rn:'bVII',q:'maj'},{rn:'bVI',q:'maj'},{rn:'V',q:'maj'}]},
-  {title:'i–bVI–bVII–i',feel:'Rock',desc:'Aeolian loop. The bVI and bVII create an open-ended modal quality widely used in rock.',chords:[{rn:'i',q:'min'},{rn:'bVI',q:'maj'},{rn:'bVII',q:'maj'},{rn:'i',q:'min'}]},
-  {title:'I–bVI–bVII–I',feel:'Rock',desc:'Borrowed from parallel minor in a major key. Dramatic and cinematic.',chords:[{rn:'I',q:'maj'},{rn:'bVI',q:'maj'},{rn:'bVII',q:'maj'},{rn:'I',q:'maj'}]},
-  {title:'I–III7–IV–iv',feel:'Neo-Soul/R&B',desc:'The chromatic III7→iv colour shift is the neo-soul signature. Rich and sophisticated.',chords:[{rn:'I',q:'maj7'},{rn:'III',q:'7'},{rn:'IV',q:'maj7'},{rn:'iv',q:'m7'}]},
-  {title:'I–IV–iii–vi',feel:'R&B/Soul',desc:'Stepping down from IV through iii to vi creates warmth and forward motion.',chords:[{rn:'I',q:'maj7'},{rn:'IV',q:'maj7'},{rn:'iii',q:'m7'},{rn:'vi',q:'m7'}]},
-  {title:'ii–IV–I',feel:'R&B/Soul',desc:'Bypasses V entirely. Moving ii→IV→I feels lush and inevitable.',chords:[{rn:'ii',q:'m7'},{rn:'IV',q:'maj7'},{rn:'I',q:'maj7'}]},
-  {title:'i–bIII–bVII–IV',feel:'Neo-Soul',desc:'Minor with borrowed major chords. Sophisticated, emotionally complex loop.',chords:[{rn:'i',q:'m7'},{rn:'bIII',q:'maj7'},{rn:'bVII',q:'7'},{rn:'IV',q:'maj7'}]},
-  {title:'I–bIII–IV',feel:'Funk/Soul',desc:'Parallel minor bIII gives funk and soul its gritty edge. Direct and powerful.',chords:[{rn:'I',q:'7'},{rn:'bIII',q:'7'},{rn:'IV',q:'7'}]},
-  {title:'I–IV Plagal Cadence',feel:'Gospel',desc:'The "Amen" movement. Foundational to gospel, blues, and spirituals.',chords:[{rn:'I',q:'7'},{rn:'IV',q:'7'}]},
-  {title:'I7–IV7–V7',feel:'Gospel',desc:'The gospel shuffle. Dominant 7ths throughout give it raw, soulful energy.',chords:[{rn:'I',q:'7'},{rn:'IV',q:'7'},{rn:'V',q:'7'}]},
-  {title:'I–I7–IV–iv',feel:'Gospel',desc:'Moving I→I7 tonicises IV, then iv minor adds bluesy colour before returning home.',chords:[{rn:'I',q:'maj'},{rn:'I',q:'7'},{rn:'IV',q:'maj'},{rn:'iv',q:'min'}]},
-  {title:'Bossa Nova · I–vi–ii–V',feel:'Bossa Nova',desc:'The classic bossa loop. Smooth voice leading, gentle movement, Brazilian jazz.',chords:[{rn:'I',q:'maj7'},{rn:'vi',q:'m7'},{rn:'ii',q:'m7'},{rn:'V',q:'7sus4'}]},
-  {title:'Samba · I–vi–ii–V',feel:'Samba',desc:'Same cycle as bossa but with a driving samba feel. Celebratory and energetic.',chords:[{rn:'I',q:'maj'},{rn:'vi',q:'min'},{rn:'ii',q:'min'},{rn:'V',q:'7'}]},
-  {title:'Flamenco Cadence',feel:'Flamenco',desc:'i–bVII–bVI–V. Ancient Phrygian descent. Dramatic, cinematic, and deeply emotional.',chords:[{rn:'i',q:'min'},{rn:'bVII',q:'maj'},{rn:'bVI',q:'maj'},{rn:'V',q:'maj'}]},
-  {title:'Tango · i–V',feel:'Tango',desc:'Minor-to-dominant oscillation gives tango its tense, seductive quality.',chords:[{rn:'i',q:'min'},{rn:'V',q:'7'}]},
-  {title:'i–iv–V–i',feel:'Classical',desc:'Harmonic minor cadence. The raised 7th in V creates its characteristic pull to tonic.',chords:[{rn:'i',q:'min'},{rn:'iv',q:'min'},{rn:'V',q:'7'},{rn:'i',q:'min'}]},
-  {title:'Pachelbel Canon',feel:'Classical',desc:"I–V–vi–iii–IV–I–IV–V. One of history's most reused progressions — timeless.",chords:[{rn:'I',q:'maj'},{rn:'V',q:'maj'},{rn:'vi',q:'min'},{rn:'iii',q:'min'},{rn:'IV',q:'maj'},{rn:'I',q:'maj'},{rn:'IV',q:'maj'},{rn:'V',q:'maj'}]},
-  {title:'Perfect Cadence · V–I',feel:'Classical',desc:'V creates maximum harmonic tension; I resolves it. The most fundamental move in Western music.',chords:[{rn:'V',q:'7'},{rn:'I',q:'maj'}]},
-  {title:'Deceptive Cadence · V–vi',feel:'Classical',desc:'V resolves to vi instead of I, surprising the listener. Creates forward momentum.',chords:[{rn:'V',q:'7'},{rn:'vi',q:'min'}]},
-  {title:'Neapolitan · bII–V–I',feel:'Classical',desc:'The Neapolitan chord (bII major) adds a dramatic Romantic-era colour before V–I.',chords:[{rn:'bII',q:'maj'},{rn:'V',q:'7'},{rn:'I',q:'maj'}]},
-  // ── SUS chord progressions ──────────────────────────────────────────────
-  {title:'I–Vsus4–V–I',feel:'Classical/Pop',desc:'The suspended 4th on V delays resolution, creating anticipation. Heard in everything from Bach to pop ballads.',chords:[{rn:'I',q:'maj'},{rn:'V',q:'sus4'},{rn:'V',q:'maj'},{rn:'I',q:'maj'}]},
-  {title:'I9sus4–I7–IV',feel:'Soul/R&B',desc:'The 9sus4 "floating" sound resolving through the dominant 7th to IV. A signature move in soul and gospel.',chords:[{rn:'I',q:'9sus4'},{rn:'I',q:'7'},{rn:'IV',q:'maj7'}]},
-  {title:'IV9sus4–I–IV9sus4–V',feel:'Jazz Fusion',desc:'Suspended dominants create an unresolved modal floating quality. Classic Miles Davis electric era.',chords:[{rn:'IV',q:'9sus4'},{rn:'I',q:'maj7'},{rn:'IV',q:'9sus4'},{rn:'V',q:'7sus4'}]},
-  {title:'i–Vsus4–V–i',feel:'Classical',desc:'Minor key suspension. The sus4 delay makes the resolution to harmonic minor V feel inevitable.',chords:[{rn:'i',q:'min'},{rn:'V',q:'sus4'},{rn:'V',q:'7'},{rn:'i',q:'min'}]},
-  {title:'Isus2–I–IVsus2–IV',feel:'Rock/Pop',desc:'Sus2 colours give a hazy, impressionistic quality. Widely used in guitar-driven rock and singer-songwriter.',chords:[{rn:'I',q:'sus2'},{rn:'I',q:'maj'},{rn:'IV',q:'sus2'},{rn:'IV',q:'maj'}]},
-  // ── AUGMENTED chord progressions ────────────────────────────────────────
-  {title:'I–I+–IV–iv',feel:'Pop/Soul',desc:'The tonic augmented chord creates a rising chromatic bass line (R→#5→R of IV). James Taylor, Beatles, bossa nova.',chords:[{rn:'I',q:'maj'},{rn:'I',q:'aug'},{rn:'IV',q:'maj'},{rn:'iv',q:'min'}]},
-  {title:'I–VI+–ii–V',feel:'Jazz',desc:'Augmented VI substitutes for the dominant VI7, creating a chromatic approach into ii. Lush and chromatic.',chords:[{rn:'I',q:'maj7'},{rn:'VI',q:'aug'},{rn:'ii',q:'m7'},{rn:'V',q:'7'}]},
-  {title:'IΔ#5–IV–IΔ#5–V',feel:'Jazz',desc:'Maj7#5 as the tonic sound — the Lydian augmented quality. Static, dreamy, and harmonically ambiguous.',chords:[{rn:'I',q:'maj7s5'},{rn:'IV',q:'maj7'},{rn:'I',q:'maj7s5'},{rn:'V',q:'7'}]},
-  // ── 6TH CHORD progressions ──────────────────────────────────────────────
-  {title:'I6–vi–ii–V',feel:'Jazz',desc:'The major 6th tonic is warmer and less static than maj7. Common in older jazz standards and stride piano style.',chords:[{rn:'I',q:'6'},{rn:'vi',q:'m7'},{rn:'ii',q:'m7'},{rn:'V',q:'7'}]},
-  {title:'I6/9–IV6/9–ii9–V13',feel:'Jazz',desc:'All-extensions progression. 6/9 tonics, a ii9, and a V13 — the fully voiced jazz harmony palette.',chords:[{rn:'I',q:'6'},{rn:'IV',q:'6'},{rn:'ii',q:'9'},{rn:'V',q:'9'}]},
-  {title:'im6–iv–V7b9–im6',feel:'Jazz Minor',desc:'The minor 6 tonic chord (used by Wes Montgomery and Bill Evans) — richer than plain minor, no b7 tension.',chords:[{rn:'i',q:'m6'},{rn:'iv',q:'m7'},{rn:'V',q:'7b9'},{rn:'i',q:'m6'}]},
-  {title:'I–I+–I6–I7',feel:'Blues/Soul',desc:'Chromatic voice leading on a static tonic: R→#5→6→b7. Common in slow blues and Ray Charles-style soul.',chords:[{rn:'I',q:'maj'},{rn:'I',q:'aug'},{rn:'I',q:'6'},{rn:'I',q:'7'}]},
-  // ── LYDIAN progressions ─────────────────────────────────────────────────
-  {title:'IΔ9#11–V–IΔ9#11',feel:'Modal Jazz',desc:'Maj9#11 as a static Lydian tonic. The #11 gives a shimmering, floating quality without strong resolution.',chords:[{rn:'I',q:'maj9s11'},{rn:'V',q:'7'},{rn:'I',q:'maj9s11'}]},
-  {title:'IV9#11–I–IV9#11–bVII7',feel:'Jazz Fusion',desc:'Lydian dominant IV — the #11 lights up the IV chord. Combines with a bluesy bVII7 for fusion colour.',chords:[{rn:'IV',q:'9s11'},{rn:'I',q:'maj7'},{rn:'IV',q:'9s11'},{rn:'bVII',q:'7'}]},
-  // ── QUARTAL progressions ──────────────────────────────────────────────
-  {title:'Quartal Vamp · i–bii',feel:'Modal Jazz',desc:"Two quartal chords a half step apart — the So What sound. Harmonically ambiguous, no strong tonal pull. McCoy Tyner's signature.",chords:[{rn:'i',q:'m9'},{rn:'bii',q:'m9'}]},
-  {title:'Quartal landing · IΔ9–V7sus4–IΔ9',feel:'Modal Jazz',desc:'Stable extended tonic with a suspended dominant. Pat Metheny and Keith Jarrett territory — diatonic but open-voiced.',chords:[{rn:'I',q:'maj9'},{rn:'V',q:'7sus4'},{rn:'I',q:'maj9'}]},
-  {title:'Quartal blues · I9–IV9sus4–I9–V9sus4',feel:'Blues',desc:'Blues with quartal-flavoured dominant 9th and suspended chords. The Herbie Hancock Maiden Voyage harmonic world.',chords:[{rn:'I',q:'9'},{rn:'IV',q:'9sus4'},{rn:'I',q:'9'},{rn:'V',q:'9sus4'}]},
-  // ── min(Δ7) progressions ──────────────────────────────────────────────
-  {title:'i(Δ7)–im7–iv–V',feel:'Jazz Minor',desc:'The classic My Funny Valentine inner-voice descent: Δ7→b7 in the tonic, voice-leading into the subdominant.',chords:[{rn:'i',q:'mMaj7'},{rn:'i',q:'m7'},{rn:'iv',q:'m7'},{rn:'V',q:'7'}]},
-  {title:'im(Δ7)–iv9–bVIΔ–V7b9',feel:'Jazz Minor',desc:'Minor-major 7th tonic into a dark jazz-minor cadence. Cinematic and emotionally rich.',chords:[{rn:'i',q:'mMaj7'},{rn:'iv',q:'m9'},{rn:'bVI',q:'maj7'},{rn:'V',q:'7b9'}]},
-  // ── Chromatic inner-voice ─────────────────────────────────────────────
-  {title:'I–I+–IVΔ7–IVm6',feel:'Pop/Soul',desc:"The chromatic 5th descent (R→#5→R of IV): I, I+, IVΔ, IVm. Beatles' Michelle, bossa nova, James Taylor.",chords:[{rn:'I',q:'maj'},{rn:'I',q:'aug'},{rn:'IV',q:'maj7'},{rn:'iv',q:'m6'}]},
-  {title:'I–I+–IVΔ9–ivm',feel:'Soul/R&B',desc:'Same chromatic bass line as above but with extended maj9 tonic landing, giving a richer contemporary feel.',chords:[{rn:'I',q:'maj'},{rn:'I',q:'aug'},{rn:'IV',q:'maj9'},{rn:'iv',q:'min'}]},
-  // ── Extended smooth jazz ──────────────────────────────────────────────
-  {title:'IΔ9–iiim9–vim9–bVII9',feel:'Smooth Jazz',desc:'Smooth descending diatonic + borrowed 9th chords. Every note of movement is a 9th chord — the Wes Montgomery and Mike Stern vocabulary.',chords:[{rn:'I',q:'maj9'},{rn:'iii',q:'m9'},{rn:'vi',q:'m9'},{rn:'bVII',q:'9'}]},
-  {title:'ii9–V9sus4–IΔ9',feel:'Jazz',desc:'Modern jazz landing: suspended V with extensions resolves to a fully voiced tonic. Herbie Hancock and Chick Corea hallmark.',chords:[{rn:'ii',q:'m9'},{rn:'V',q:'9sus4'},{rn:'I',q:'maj9'}]},
-  {title:'IΔ9–iiim7–ii9–V9',feel:'Jazz',desc:'Smooth diatonic cycle: tonic→mediant→subdominant→dominant, all voiced with extensions. Sophisticated and forward-moving.',chords:[{rn:'I',q:'maj9'},{rn:'iii',q:'m7'},{rn:'ii',q:'9'},{rn:'V',q:'9'}]},
-  // ── 6th chord jazz ────────────────────────────────────────────────────
-  {title:'im6–bVIIΔ7–bVI6–V7',feel:'Jazz Minor',desc:'Minor 6th tonic — a warmer sound with no b7 tension. Through bVII and bVI6 before resolving. Grant Green, Wes Montgomery.',chords:[{rn:'i',q:'m6'},{rn:'bVII',q:'maj7'},{rn:'bVI',q:'6'},{rn:'V',q:'7'}]},
-  {title:'I6–IV9–I6–V9',feel:'Blues',desc:'Jazz blues with 6th and 9th dominant chords throughout. The Grant Green and Wes Montgomery blues vocabulary.',chords:[{rn:'I',q:'6'},{rn:'IV',q:'9'},{rn:'I',q:'6'},{rn:'V',q:'9'}]},
-];
+// The progression voicing helpers now live in data/progressions.js. getChordName
+// and voicingForSlot are imported above; voicingForSlot resolves a slot's chosen
+// movable shape (via CHORD_INDEX) and, failing that, prefers an open/cowboy voicing
+// (COWBOY_MAP, when "Open Pos." is on) or the default quality template.
+
+// PROGS_RN is imported from data/progressions.json (see import at top).
 
 function ProgressionsTab({showDeg}){
   const[keyNote,setKeyNote]=useState(0);
@@ -776,7 +617,7 @@ function ProgressionsTab({showDeg}){
     return r;
   },[broadCat,search]);
   const prog=sel!=null?PROGS_RN[sel]:null;
-  const getProgVoicings=useCallback(p=>p.chords.map(c=>({...c,name:getChordName(keyNote,c.rn,c.q),voicing:getVoicing(keyNote,c.rn,c.q,showCowboy)})),[keyNote,showCowboy]);
+  const getProgVoicings=useCallback(p=>p.chords.map(c=>({...c,name:getChordName(keyNote,c.rn,c.q),voicing:voicingForSlot(c,keyNote,{cowboyMap:showCowboy?COWBOY_MAP:null,chordIndex:CHORD_INDEX})})),[keyNote,showCowboy]);
 
   if(prog){
     const slots=getProgVoicings(prog);
@@ -1801,16 +1642,20 @@ function SettingsTab(){
           <span className={updating?'ct-spin':''}>↻</span> {updating?'Updating…':'Update'}
         </button>
       </div>
-      {/* ── Chord editor link ── */}
-      <div style={{background:'#13121f',borderRadius:'11px',border:'1px solid #2a2840',padding:'11px 12px',marginBottom:'10px',display:'flex',alignItems:'center',gap:'10px'}}>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:'13px',fontWeight:700,color:'#fff'}}>🎛 Chord Editor</div>
-          <div style={{fontSize:'11px',color:'#888',marginTop:'2px',lineHeight:'1.4'}}>Add or edit chord shapes — no coding. Degrees auto-derive from the fretboard.</div>
+      {/* ── Editors ── */}
+      <div style={{background:'#13121f',borderRadius:'11px',border:'1px solid #2a2840',padding:'11px 12px',marginBottom:'10px'}}>
+        <div style={{fontSize:'13px',fontWeight:700,color:'#fff'}}>🎛 Editors</div>
+        <div style={{fontSize:'11px',color:'#888',marginTop:'2px',lineHeight:'1.4',marginBottom:'10px'}}>Build your own content — no coding. The <b>Chord Editor</b> adds or edits chord shapes (degrees auto-derive from the fretboard); the <b>Progression Editor</b> builds chord progressions from Roman numerals, qualities, and specific voicings, transposable to any key. Changes save to a JSON file you commit to publish.</div>
+        <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+          <a href="/editor.html?tab=chords" target="_blank" rel="noopener noreferrer"
+            style={{background:'#ffd93d',color:'#111',textDecoration:'none',padding:'9px 14px',borderRadius:'9px',
+              fontSize:'12px',fontWeight:800,minHeight:'40px',whiteSpace:'nowrap',display:'flex',alignItems:'center',
+              touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>🎸 Chord Editor ↗</a>
+          <a href="/editor.html?tab=progs" target="_blank" rel="noopener noreferrer"
+            style={{background:'#a29bfe',color:'#111',textDecoration:'none',padding:'9px 14px',borderRadius:'9px',
+              fontSize:'12px',fontWeight:800,minHeight:'40px',whiteSpace:'nowrap',display:'flex',alignItems:'center',
+              touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>🎵 Progression Editor ↗</a>
         </div>
-        <a href="/editor.html" target="_blank" rel="noopener noreferrer"
-          style={{background:'#a29bfe',color:'#111',textDecoration:'none',padding:'9px 14px',borderRadius:'9px',
-            fontSize:'12px',fontWeight:800,minHeight:'40px',whiteSpace:'nowrap',display:'flex',alignItems:'center',
-            touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>Open ↗</a>
       </div>
       {/* ── DEBUG ── */}
       <DebugPanel/>
