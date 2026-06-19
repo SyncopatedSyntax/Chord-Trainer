@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef, memo } from "react";
+import { reloadApp } from "./pwa.js";
 
 const DC={
   'R':'#ff4757','3':'#ffd93d','b3':'#ff9f43','7':'#ff6b6b','b7':'#fdcb6e',
@@ -563,7 +564,7 @@ const store={
   },
   async set(key,value){
     try{localStorage.setItem(key,value);}catch(e){}
-    try{if(typeof window.storage!=='undefined')await store.set(key,value);}catch(e){}
+    try{if(typeof window.storage!=='undefined')await window.storage.set(key,value);}catch(e){}
   },
 };
 
@@ -654,8 +655,15 @@ function transposeVoicing(v,targetNote){
   return{...v,str:newStr,sf:Math.max(1,active.length>0?Math.min(...active):1)};
 }
 
-let _ctx=null,_unlocked=false;
+let _ctx=null,_unlocked=false,_master=null;
 function getCtx(){if(!_ctx)_ctx=new(window.AudioContext||window.webkitAudioContext)();if(_ctx.state==='suspended')_ctx.resume();return _ctx;}
+// Shared master bus — keeps the summed amplitude of dense voicings (up to ~30
+// oscillators) below the clipping ceiling instead of every voice hitting the
+// destination directly. Created once per context.
+function getMaster(ctx){
+  if(!_master||_master.context!==ctx){_master=ctx.createGain();_master.gain.value=0.5;_master.connect(ctx.destination);}
+  return _master;
+}
 function unlockAudio(){
   if(_unlocked)return;
   // ── iOS silent switch fix ─────────────────────────────────────────────
@@ -679,11 +687,12 @@ function unlockAudio(){
   ctx.resume().then(()=>{_unlocked=true;});
 }
 function pluckNote(ctx,freq,when,vol=0.16){
+  const master=getMaster(ctx);
   [[1,1.0],[2,0.45],[3,0.22],[4,0.09],[6,0.04]].forEach(([h,a])=>{
     const osc=ctx.createOscillator(),g=ctx.createGain(),filt=ctx.createBiquadFilter();
     osc.type='sine';osc.frequency.value=freq*h;filt.type='lowpass';filt.frequency.value=Math.min(3200,freq*h*3);
     g.gain.setValueAtTime(0,when);g.gain.linearRampToValueAtTime(vol*a,when+0.005);g.gain.exponentialRampToValueAtTime(0.0001,when+(h===1?1.6:0.9));
-    osc.connect(filt);filt.connect(g);g.connect(ctx.destination);osc.start(when);osc.stop(when+2);
+    osc.connect(filt);filt.connect(g);g.connect(master);osc.start(when);osc.stop(when+2);
   });
 }
 function midiToHz(m){return 440*Math.pow(2,(m-69)/12);}
@@ -1954,10 +1963,13 @@ const ChordsOfDay=memo(function ChordsOfDay({srsData,showDeg,setShowDeg,onMarkRe
       )}
     </div>
   </div>);
-// Custom memo comparator: only re-render when showDeg changes.
+// Custom memo comparator: re-render on showDeg or mastered changes.
 // srsData prop changes (from App's saveSrs/saveHist) are ignored because
 // we already snapshotted it at mount. onMarkReviewed is stable (ref pattern in App).
-},(prev,next)=>prev.showDeg===next.showDeg);
+// mastered is compared so a "Master" toggle from a daily-chord detail propagates
+// the fresh Set down to ChordDetail (avoids a stale prop when reopening details).
+// The daily-list/srs snapshot is separate component state, so this re-render is cheap.
+},(prev,next)=>prev.showDeg===next.showDeg&&prev.mastered===next.mastered);
 
 // ── INSTALL BANNER ────────────────────────────────────────────────────────
 // Shows a native-feeling bottom sheet prompting the user to add to home screen.
@@ -2026,16 +2038,27 @@ function BannerStack(){
   const isStandalone=window.matchMedia('(display-mode: standalone)').matches||
     window.navigator.standalone===true;
 
-  // ── Increment launch counter unconditionally ──────────────────────────
-  // Must run before any early returns so standalone PWA users always
-  // have an up-to-date ct_launches value for suppression checks.
+  // ── Launch counter ────────────────────────────────────────────────────
+  // `launches` reflects THIS launch's number, used for the every-5th-launch
+  // gating below. The increment is a side effect, so it lives in an effect
+  // (not the useState initializer) and is guarded by a per-session flag so a
+  // real launch counts exactly once — even under StrictMode's double-invoke.
   const[launches]=useState(()=>{
     try{
-      const n=parseInt(localStorage.getItem('ct_launches')||'0',10)+1;
-      localStorage.setItem('ct_launches',String(n));
-      return n;
+      const prev=parseInt(localStorage.getItem('ct_launches')||'0',10);
+      // If this session already counted, `launches` is the stored value;
+      // otherwise it's stored+1 (the value the effect will persist).
+      return sessionStorage.getItem('ct_launched')?prev:prev+1;
     }catch(e){return 1;}
   });
+  useEffect(()=>{
+    try{
+      if(sessionStorage.getItem('ct_launched'))return;
+      sessionStorage.setItem('ct_launched','1');
+      const n=parseInt(localStorage.getItem('ct_launches')||'0',10)+1;
+      localStorage.setItem('ct_launches',String(n));
+    }catch(e){}
+  },[]);
 
   // ── Install banner logic ──────────────────────────────────────────────
   useEffect(()=>{
@@ -2219,6 +2242,17 @@ function HelpTab(){
   ];
   return(
     <div style={{padding:'14px',maxWidth:'560px',margin:'0 auto'}}>
+      {/* ── App version / update ── */}
+      <div style={{background:'#13121f',borderRadius:'11px',border:'1px solid #2a2840',padding:'11px 12px',marginBottom:'10px',display:'flex',alignItems:'center',gap:'10px'}}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:'13px',fontWeight:700,color:'#fff'}}>App Updates</div>
+          <div style={{fontSize:'11px',color:'#888',marginTop:'2px',lineHeight:'1.4'}}>Installed and works offline. Tap Update to load the newest version when one is available.</div>
+        </div>
+        <button onClick={reloadApp}
+          style={{background:'#ffd93d',color:'#111',border:'none',padding:'9px 14px',borderRadius:'9px',
+            fontSize:'12px',fontWeight:800,cursor:'pointer',minHeight:'40px',whiteSpace:'nowrap',
+            touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>↻ Update</button>
+      </div>
       <a href="https://ko-fi.com/syncopatedsyntax" target="_blank" rel="noopener noreferrer"
         style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',
           background:'#FF5E5B',color:'#fff',borderRadius:'11px',padding:'12px 20px',
@@ -2559,10 +2593,15 @@ export default function App(){
 
   const exportData=()=>{
     const json=JSON.stringify({srs,hist,degHist,mastered:[...mastered],v:2,exported:new Date().toISOString()},null,2);
+    // Blob URL (not a data: URI) — no browser URL-length cap, so large histories
+    // export reliably. Mirrors the manifest blob approach above.
+    const blob=new Blob([json],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
-    a.href='data:application/json;charset=utf-8,'+encodeURIComponent(json);
+    a.href=url;
     a.download=`chordtrainer-${todayStr()}.json`;
     document.body.appendChild(a);a.click();document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const importData=e=>{
