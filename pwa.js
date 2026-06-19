@@ -13,10 +13,27 @@ const updateSW = registerSW({
   },
 });
 
-// Called by the in-app "Update" button. Activates any waiting service worker
-// (which triggers a reload via vite-plugin-pwa), and falls back to a plain
-// reload when there is no waiting worker so the button always refreshes.
-export function reloadApp() {
-  try { updateSW(true); } catch (e) {}
-  setTimeout(() => { try { window.location.reload(); } catch (e) {} }, 500);
+// Called by the in-app "Update" button. Forces a network check for a new
+// service worker NOW, waits for it to take control if one is found, then
+// reloads — so a single tap reliably pulls the latest deploy (instead of
+// reloading into the still-cached version on the first try).
+export async function reloadApp() {
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) {
+        await reg.update(); // hit the network for a fresh sw.js right now
+        if (reg.installing || reg.waiting) {
+          // A new version is downloading/ready — let it activate, then the
+          // controllerchange (or our timeout) lets us reload into it.
+          await new Promise(resolve => {
+            navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true });
+            try { updateSW(true); } catch (e) {}
+            setTimeout(resolve, 3000); // safety net if nothing fires
+          });
+        }
+      }
+    }
+  } catch (e) {}
+  try { window.location.reload(); } catch (e) {}
 }
