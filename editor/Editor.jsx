@@ -43,6 +43,7 @@ export default function Editor() {
   const [msg, setMsg] = useState('');
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('all');
+  const [view, setView] = useState('edit'); // 'edit' | 'help'
   const importRef = useRef(null);
   const editingOriginal = useRef(null); // the chord object being edited (for id-collision allowance)
 
@@ -198,6 +199,16 @@ export default function Editor() {
       {msg && <div style={{ background: '#ffd93d18', border: '1px solid #ffd93d44', color: '#ffd93d', borderRadius: '9px', padding: '8px 12px', marginBottom: '12px', fontSize: '12px', fontWeight: 600 }}>{msg}</div>}
       {!hasFsAccess && <div style={{ fontSize: '11px', color: '#666', marginBottom: '12px' }}>Your browser can't save in place — use <b>Download</b> to export and <b>Import</b> to reload. (Chrome/Edge support direct file editing.)</div>}
 
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '14px' }}>
+        {[{ id: 'edit', label: '✏️ Editor' }, { id: 'help', label: '📖 How to publish' }].map(t => (
+          <button key={t.id} onClick={() => setView(t.id)} style={btn(view === t.id)}>{t.label}</button>
+        ))}
+      </div>
+
+      {view === 'help' && <Instructions hasFsAccess={hasFsAccess} />}
+
+      {view === 'edit' && (
       <div style={{ display: 'grid', gridTemplateColumns: draft ? '300px 1fr' : '1fr', gap: '14px', alignItems: 'start' }}>
         {/* List */}
         <div style={panel}>
@@ -324,6 +335,7 @@ export default function Editor() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
@@ -334,6 +346,79 @@ function Field({ label, value, onChange, placeholder, mono }) {
       <div style={labelCss}>{label}</div>
       <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
         style={{ width: '100%', background: '#0f0e17', border: '1px solid #2a2840', borderRadius: '8px', padding: '8px 10px', color: '#fff', fontSize: '13px', outline: 'none', fontFamily: mono ? 'monospace' : 'inherit' }} />
+    </div>
+  );
+}
+
+function Step({ n, title, children }) {
+  return (
+    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+      <div style={{ flexShrink: 0, width: '26px', height: '26px', borderRadius: '50%', background: '#ffd93d', color: '#111', fontWeight: 900, fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{n}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: '14px', fontWeight: 800, color: '#fff', marginBottom: '3px' }}>{title}</div>
+        <div style={{ fontSize: '13px', color: '#bbb', lineHeight: 1.6 }}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
+const code = { background: '#0f0e17', border: '1px solid #2a2840', borderRadius: '5px', padding: '1px 6px', fontFamily: 'monospace', fontSize: '12px', color: '#ffd93d' };
+
+// Instructions tab — how an edit here becomes a change in the live app.
+function Instructions({ hasFsAccess }) {
+  return (
+    <div style={{ maxWidth: '720px' }}>
+      <div style={{ ...panel, marginBottom: '14px', borderColor: '#ffd93d44' }}>
+        <div style={{ fontSize: '13px', color: '#ddd', lineHeight: 1.6 }}>
+          <b style={{ color: '#ffd93d' }}>How this works.</b> This editor changes a <b>local copy</b> of the chord
+          data. The live app reads <code style={code}>data/chords.json</code> from the repo, so your edits go live
+          only after that file is committed and the site redeploys. Here's the full loop:
+        </div>
+      </div>
+
+      <div style={{ ...panel, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <Step n="1" title="Edit your chords">
+          Add, duplicate, edit, or delete chords in the <b>Editor</b> tab. The header shows a live
+          <span style={{ color: '#00b894', fontWeight: 700 }}> ✓ all valid </span> / <span style={{ color: '#ff6363', fontWeight: 700 }}>✗ issues</span>
+          status — every shape is checked automatically (degrees are derived from the fretboard), so you can't
+          save a chord with a wrong note.
+        </Step>
+
+        <Step n="2" title="Save the JSON file">
+          {hasFsAccess ? (
+            <>The cleanest path on Chrome/Edge desktop: click <b>Open file…</b> and pick the repo's
+            <code style={code}>data/chords.json</code>, edit, then <b>Save file ✓</b> to write straight back to it.
+            If you didn't open from disk, <b>Save file…</b> / <b>Download</b> writes a fresh <code style={code}>chords.json</code> to your computer.</>
+          ) : (
+            <>Your browser can't write files directly, so click <b>Download</b> to get an updated
+            <code style={code}> chords.json</code>. (Tip: desktop Chrome or Edge can edit the file in place via <b>Open file…</b>.)</>
+          )}
+        </Step>
+
+        <Step n="3" title="Put it in the repo">
+          Replace <code style={code}>data/chords.json</code> in the project with the file you just saved
+          (skip this if you used <b>Open file…</b> on that exact file — it's already updated).
+        </Step>
+
+        <Step n="4" title="Commit & push to GitHub">
+          Commit the change and push to <code style={code}>main</code>:
+          <div style={{ ...code, display: 'block', padding: '8px 10px', marginTop: '6px', whiteSpace: 'pre-wrap', color: '#9be7c4' }}>git add data/chords.json{'\n'}git commit -m "Update chords"{'\n'}git push</div>
+        </Step>
+
+        <Step n="5" title="Vercel redeploys automatically">
+          Pushing to <code style={code}>main</code> triggers a Vercel build. After ~1 minute the live app at
+          <code style={code}> chord-trainer-mauve.vercel.app</code> serves the new chords. If you have it installed
+          as an app, open the <b>Guide</b> tab and tap <b>↻ Update</b> (or just reload) to pull the new version.
+        </Step>
+      </div>
+
+      <div style={{ ...panel, marginTop: '14px' }}>
+        <div style={{ fontSize: '11px', color: '#888', lineHeight: 1.6 }}>
+          <b style={{ color: '#bbb' }}>Tips.</b> Use <b>Download</b> any time to back up the whole set. Use <b>Import</b>
+          to load a <code style={code}>chords.json</code> from disk and keep editing it. The <b>id</b> of each chord
+          must be unique — the editor flags collisions before you save.
+        </div>
+      </div>
     </div>
   );
 }
