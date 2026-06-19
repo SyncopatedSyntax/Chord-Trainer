@@ -1813,6 +1813,17 @@ function HelpTab(){
             fontSize:'12px',fontWeight:800,cursor:'pointer',minHeight:'40px',whiteSpace:'nowrap',
             touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>↻ Update</button>
       </div>
+      {/* ── Chord editor link ── */}
+      <div style={{background:'#13121f',borderRadius:'11px',border:'1px solid #2a2840',padding:'11px 12px',marginBottom:'10px',display:'flex',alignItems:'center',gap:'10px'}}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:'13px',fontWeight:700,color:'#fff'}}>🎛 Chord Editor</div>
+          <div style={{fontSize:'11px',color:'#888',marginTop:'2px',lineHeight:'1.4'}}>Add or edit chord shapes — no coding. Degrees auto-derive from the fretboard.</div>
+        </div>
+        <a href="/editor.html" target="_blank" rel="noopener noreferrer"
+          style={{background:'#a29bfe',color:'#111',textDecoration:'none',padding:'9px 14px',borderRadius:'9px',
+            fontSize:'12px',fontWeight:800,minHeight:'40px',whiteSpace:'nowrap',display:'flex',alignItems:'center',
+            touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>Open ↗</a>
+      </div>
       <a href="https://ko-fi.com/syncopatedsyntax" target="_blank" rel="noopener noreferrer"
         style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',
           background:'#FF5E5B',color:'#fff',borderRadius:'11px',padding:'12px 20px',
