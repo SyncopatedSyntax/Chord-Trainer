@@ -31,7 +31,10 @@ export default defineConfig({
       workbox: {
         // Precache the built app shell so it loads with no network.
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        // SPA fallback for the trainer — but NOT for the editor page, or the SW
+        // would serve index.html (the trainer) when navigating to /editor.html.
         navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/editor\.html/],
         cleanupOutdatedCaches: true,
       },
       // No SW in `npm run dev`; virtual:pwa-register stays a no-op there.

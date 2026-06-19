@@ -1647,11 +1647,11 @@ function SettingsTab(){
         <div style={{fontSize:'13px',fontWeight:700,color:'#fff'}}>🎛 Editors</div>
         <div style={{fontSize:'11px',color:'#888',marginTop:'2px',lineHeight:'1.4',marginBottom:'10px'}}>Build your own content — no coding. The <b>Chord Editor</b> adds or edits chord shapes (degrees auto-derive from the fretboard); the <b>Progression Editor</b> builds chord progressions from Roman numerals, qualities, and specific voicings, transposable to any key. Changes save to a JSON file you commit to publish.</div>
         <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-          <a href="/editor.html?tab=chords" target="_blank" rel="noopener noreferrer"
+          <a href="/editor.html#chords" target="_blank" rel="noopener noreferrer"
             style={{background:'#ffd93d',color:'#111',textDecoration:'none',padding:'9px 14px',borderRadius:'9px',
               fontSize:'12px',fontWeight:800,minHeight:'40px',whiteSpace:'nowrap',display:'flex',alignItems:'center',
               touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>🎸 Chord Editor ↗</a>
-          <a href="/editor.html?tab=progs" target="_blank" rel="noopener noreferrer"
+          <a href="/editor.html#progs" target="_blank" rel="noopener noreferrer"
             style={{background:'#a29bfe',color:'#111',textDecoration:'none',padding:'9px 14px',borderRadius:'9px',
               fontSize:'12px',fontWeight:800,minHeight:'40px',whiteSpace:'nowrap',display:'flex',alignItems:'center',
               touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>🎵 Progression Editor ↗</a>
