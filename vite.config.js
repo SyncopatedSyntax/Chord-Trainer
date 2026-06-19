@@ -1,8 +1,22 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { fileURLToPath } from 'url'
+
+// Absolute paths avoid a Windows path-normalization bug in multi-page input.
+const r = p => fileURLToPath(new URL(p, import.meta.url))
 
 export default defineConfig({
+  // Multi-page: the trainer (index.html) and the standalone chord editor
+  // (editor.html), which share data/ and components/.
+  build: {
+    rollupOptions: {
+      input: {
+        main: r('./index.html'),
+        editor: r('./editor.html'),
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({
