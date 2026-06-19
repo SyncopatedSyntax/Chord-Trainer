@@ -1779,6 +1779,12 @@ function DebugPanel(){
 }
 
 function SettingsTab(){
+  const[updating,setUpdating]=useState(false);
+  const onUpdate=async()=>{if(updating)return;setUpdating(true);try{await reloadApp();}catch(e){}
+    // reloadApp reloads the page on success; if we're still here after a beat
+    // with nothing to update, drop back to the idle label.
+    setTimeout(()=>setUpdating(false),7000);
+  };
   return(
     <div style={{padding:'14px',maxWidth:'560px',margin:'0 auto'}}>
       <div style={{fontSize:'15px',fontWeight:900,color:'#fff',marginBottom:'10px'}}>Settings</div>
@@ -1786,12 +1792,14 @@ function SettingsTab(){
       <div style={{background:'#13121f',borderRadius:'11px',border:'1px solid #2a2840',padding:'11px 12px',marginBottom:'10px',display:'flex',alignItems:'center',gap:'10px'}}>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:'13px',fontWeight:700,color:'#fff'}}>App Updates</div>
-          <div style={{fontSize:'11px',color:'#888',marginTop:'2px',lineHeight:'1.4'}}>Installed and works offline. Tap Update to load the newest version when one is available.</div>
+          <div style={{fontSize:'11px',color:'#888',marginTop:'2px',lineHeight:'1.4'}}>{updating?'Checking for a new version and reloading…':'Installed and works offline. Tap Update to load the newest version when one is available.'}</div>
         </div>
-        <button onClick={reloadApp}
+        <button onClick={onUpdate} disabled={updating}
           style={{background:'#ffd93d',color:'#111',border:'none',padding:'9px 14px',borderRadius:'9px',
-            fontSize:'12px',fontWeight:800,cursor:'pointer',minHeight:'40px',whiteSpace:'nowrap',
-            touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>↻ Update</button>
+            fontSize:'12px',fontWeight:800,cursor:updating?'default':'pointer',minHeight:'40px',whiteSpace:'nowrap',
+            opacity:updating?0.7:1,touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>
+          <span className={updating?'ct-spin':''}>↻</span> {updating?'Updating…':'Update'}
+        </button>
       </div>
       {/* ── Chord editor link ── */}
       <div style={{background:'#13121f',borderRadius:'11px',border:'1px solid #2a2840',padding:'11px 12px',marginBottom:'10px',display:'flex',alignItems:'center',gap:'10px'}}>
@@ -1961,6 +1969,8 @@ export default function App(){
       svg{user-select:none;-webkit-user-select:none;pointer-events:none;}
       svg [onclick],svg [style*='cursor']{pointer-events:auto;}
       :root{--sat:env(safe-area-inset-top);--sab:env(safe-area-inset-bottom);}
+      @keyframes ct-spin{to{transform:rotate(360deg);}}
+      .ct-spin{display:inline-block;animation:ct-spin .8s linear infinite;}
     `;
     // Inject viewport meta synchronously — must exist before first paint in standalone mode.
     // useEffect runs after paint so we also set it here via DOM manipulation which is
