@@ -2054,7 +2054,7 @@ export default function App(){
   const TABS=[{id:'daily',label:'Today',icon:'🌅'},{id:'library',label:'Library',icon:'📚'},{id:'progs',label:'Progs',icon:'🎵'},{id:'quiz',label:'Quiz',icon:'🎯'},{id:'weak',label:'Weak',icon:'💪'},{id:'help',label:'Guide',icon:'📖'},{id:'settings',label:'Settings',icon:'⚙️'}];
 
   return(
-    <div style={{background:'#0f0e17',height:'100dvh',display:'flex',flexDirection:'column',color:'#fffffe',fontFamily:"var(--font-body)",WebkitFontSmoothing:'antialiased',paddingTop:'env(safe-area-inset-top)'}}>
+    <div style={{background:'#0f0e17',height:'100dvh',display:'flex',flexDirection:'column',color:'#fffffe',fontFamily:"var(--font-body)",WebkitFontSmoothing:'antialiased'}}>
       <AppHeader toolKey="chord">
         <button className={`fw-header-btn${showDeg?' is-on':''}`} onClick={()=>setShowDeg(p=>!p)}>
           {showDeg?'✦ Degrees ON':'Scale Degrees'}
