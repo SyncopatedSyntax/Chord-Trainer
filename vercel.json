@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "chord-trainer-mauve.vercel.app" }],
+      "destination": "https://fretworks.vercel.app/chord",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    { "source": "/chord/(.*)", "destination": "/$1" },
+    { "source": "/chord", "destination": "/" }
+  ]
+}

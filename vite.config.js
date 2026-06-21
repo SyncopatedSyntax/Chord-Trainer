@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath } from 'url'
 
 // Absolute paths avoid a Windows path-normalization bug in multi-page input.
@@ -11,6 +10,9 @@ const r = p => fileURLToPath(new URL(p, import.meta.url))
 const BUILD_ID = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC'
 
 export default defineConfig({
+  // Served under /chord on the unified domain (Vercel multi-zone). All asset
+  // URLs are emitted with this prefix so they resolve through the shell.
+  base: '/chord/',
   // Replaced at build time (and in dev) wherever __BUILD_ID__ appears in source.
   define: { __BUILD_ID__: JSON.stringify(BUILD_ID) },
   // Multi-page: the trainer (index.html) and the standalone chord editor
@@ -23,28 +25,10 @@ export default defineConfig({
       },
     },
   },
+  // No PWA plugin here: under the unified Fretworks origin the shell owns the
+  // single service worker + manifest. Offline for /chord is handled by the
+  // shell SW's runtime caching (see fretworks/sw.js).
   plugins: [
     react(),
-    VitePWA({
-      // New SW skips waiting and claims clients automatically; our in-app
-      // "Update" button (pwa.js → reloadApp) lets the user pull it in on demand.
-      registerType: 'autoUpdate',
-      // We register manually in pwa.js so we can expose updateSW() to the button.
-      injectRegister: false,
-      // The app generates and injects its own web manifest at runtime (canvas
-      // icons + Blob), so the plugin must not emit a competing manifest.
-      manifest: false,
-      workbox: {
-        // Precache the built app shell so it loads with no network.
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
-        // SPA fallback for the trainer — but NOT for the editor page, or the SW
-        // would serve index.html (the trainer) when navigating to /editor.html.
-        navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/^\/editor\.html/],
-        cleanupOutdatedCaches: true,
-      },
-      // No SW in `npm run dev`; virtual:pwa-register stays a no-op there.
-      devOptions: { enabled: false },
-    }),
   ],
 })

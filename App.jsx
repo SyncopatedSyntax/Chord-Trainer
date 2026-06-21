@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef, memo } from "react";
+import { AppHeader, TabBar } from "@fretworks/design";
 import { reloadApp } from "./pwa.js";
 import CHORDS from "./data/chords.json";
 import { OPEN_MIDI, NOTE_NAMES, DC, CATS, DEG_HINT } from "./data/theory.js";
@@ -1651,11 +1652,11 @@ function SettingsTab(){
         <div style={{fontSize:'13px',fontWeight:700,color:'#fff'}}>🎛 Editors</div>
         <div style={{fontSize:'11px',color:'#888',marginTop:'2px',lineHeight:'1.4',marginBottom:'10px'}}>Build your own content — no coding. The <b>Chord Editor</b> adds or edits chord shapes (degrees auto-derive from the fretboard); the <b>Progression Editor</b> builds chord progressions from Roman numerals, qualities, and specific voicings, transposable to any key. Changes save to a JSON file you commit to publish.</div>
         <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-          <a href="/editor.html#chords" target="_blank" rel="noopener noreferrer"
+          <a href={`${import.meta.env.BASE_URL}editor.html#chords`} target="_blank" rel="noopener noreferrer"
             style={{background:'#ffd93d',color:'#111',textDecoration:'none',padding:'9px 14px',borderRadius:'9px',
               fontSize:'12px',fontWeight:800,minHeight:'40px',whiteSpace:'nowrap',display:'flex',alignItems:'center',
               touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>🎸 Chord Editor ↗</a>
-          <a href="/editor.html#progs" target="_blank" rel="noopener noreferrer"
+          <a href={`${import.meta.env.BASE_URL}editor.html#progs`} target="_blank" rel="noopener noreferrer"
             style={{background:'#a29bfe',color:'#111',textDecoration:'none',padding:'9px 14px',borderRadius:'9px',
               fontSize:'12px',fontWeight:800,minHeight:'40px',whiteSpace:'nowrap',display:'flex',alignItems:'center',
               touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}}>🎵 Progression Editor ↗</a>
@@ -1960,26 +1961,15 @@ export default function App(){
     setMeta('viewport','width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover');
     setMeta('apple-mobile-web-app-capable','yes');
     setMeta('apple-mobile-web-app-status-bar-style','black-translucent');
-    setMeta('apple-mobile-web-app-title','ChordTrainer');
+    setMeta('apple-mobile-web-app-title','Fretworks');
 
-    // Web app manifest with generated icon
-    const manifest={
-      name:'ChordTrainer',short_name:'ChordTrainer',
-      description:'Guitar chord training with SRS, scale degrees, and progressions.',
-      start_url:'.',display:'standalone',orientation:'portrait',
-      background_color:'#0f0e17',theme_color:'#0f0e17',
-      icons:[
-        {src:iconUrl180,sizes:'180x180',type:'image/png'},
-        {src:iconUrl,sizes:'512x512',type:'image/png'},
-      ],
-    };
-    const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
-    const murl=URL.createObjectURL(blob);
+    // Single PWA: reference the unified shell manifest (one manifest per origin)
+    // instead of generating a competing per-app manifest.
     let mlink=document.querySelector('link[rel="manifest"]');
     if(!mlink){mlink=document.createElement('link');mlink.rel='manifest';document.head.appendChild(mlink);}
-    mlink.href=murl;
+    mlink.href='/manifest.webmanifest';
 
-    return()=>{document.head.removeChild(style);window.removeEventListener('scroll',lockScroll);URL.revokeObjectURL(murl);};
+    return()=>{document.head.removeChild(style);window.removeEventListener('scroll',lockScroll);};
   },[]);
 
   useEffect(()=>{
@@ -2064,32 +2054,14 @@ export default function App(){
   const TABS=[{id:'daily',label:'Today',icon:'🌅'},{id:'library',label:'Library',icon:'📚'},{id:'progs',label:'Progs',icon:'🎵'},{id:'quiz',label:'Quiz',icon:'🎯'},{id:'weak',label:'Weak',icon:'💪'},{id:'help',label:'Guide',icon:'📖'},{id:'settings',label:'Settings',icon:'⚙️'}];
 
   return(
-    <div style={{background:'#0f0e17',height:'100dvh',display:'flex',flexDirection:'column',color:'#fffffe',fontFamily:"'Segoe UI',system-ui,sans-serif",WebkitFontSmoothing:'antialiased',paddingTop:'env(safe-area-inset-top)'}}>
-      <div style={{padding:'10px 12px',borderBottom:'1px solid #1a1928',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}>
-        <div style={{display:'flex',flexDirection:'column'}}>
-          <div style={{fontSize:'16px',fontWeight:900,lineHeight:'1.1'}}>🎸 <span style={{color:'#ffd93d'}}>Chord</span>Trainer</div>
-          <div style={{fontSize:'9px',color:'#555',letterSpacing:'1px',paddingLeft:'22px'}}>by Zak</div>
-        </div>
-        <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'7px',flexWrap:'wrap',justifyContent:'flex-end'}}>
-          <button onClick={()=>setShowData(p=>!p)} style={{background:'transparent',border:'1px solid #2a2840',color:'#888',padding:'5px 9px',borderRadius:'7px',cursor:'pointer',fontSize:'10px',minHeight:'36px',whiteSpace:'nowrap',touchAction:'manipulation'}}>⬆⬇ Data</button>
-          <button onClick={()=>setShowDeg(p=>!p)} style={{padding:'7px 12px',borderRadius:'9px',cursor:'pointer',fontSize:'11px',fontWeight:700,border:`2px solid ${showDeg?'#ffd93d':'#555'}`,background:showDeg?'#ffd93d':'transparent',color:showDeg?'#111':'#bbb',transition:'background .2s,color .2s,border-color .2s,box-shadow .2s',minHeight:'36px',whiteSpace:'nowrap',boxShadow:showDeg?'0 0 12px #ffd93d55':'none',touchAction:'manipulation'}}>
-            {showDeg?'✦ Degrees ON':'Scale Degrees'}
-          </button>
-        </div>
-      </div>
-      {showData&&(
-        <div style={{background:'#13121f',borderBottom:'1px solid #1a1928',padding:'9px 12px',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}>
-          <span style={{fontSize:'10px',color:'#888'}}>Progress backup:</span>
-          <button onClick={exportData} style={{background:'#a29bfe22',color:'#a29bfe',border:'1px solid #a29bfe44',padding:'5px 12px',borderRadius:'7px',cursor:'pointer',fontSize:'10px',fontWeight:700,minHeight:'36px',touchAction:'manipulation'}}>Export ↓</button>
-          <label style={{background:'#4ecdc422',color:'#4ecdc4',border:'1px solid #4ecdc444',padding:'5px 12px',borderRadius:'7px',cursor:'pointer',fontSize:'10px',fontWeight:700,minHeight:'36px',display:'flex',alignItems:'center',touchAction:'manipulation'}}>Import ↑<input type="file" accept=".json" onChange={importData} style={{display:'none'}}/></label>
-          {importMsg&&<span style={{fontSize:'10px',color:importMsg.startsWith('✓')?'#00b894':'#ff6363',fontWeight:700}}>{importMsg}</span>}
-          <span style={{fontSize:'9px',color:'#444',marginLeft:'auto'}}>{Object.keys(srs).length} SRS · {hist.length} history · {degHist.length} deg</span>
-        </div>
-      )}
-      {/* Tab bar — 44px min-height per Apple HIG; overflowX hidden but scrollable to avoid clipping */}
-      <div style={{display:'flex',borderBottom:'1px solid #1a1928',overflowX:'auto',WebkitOverflowScrolling:'touch',scrollbarWidth:'none'}}>
-        {TABS.map(t=>(<button key={t.id} onClick={()=>{setTab(t.id);if(scrollRef.current)scrollRef.current.scrollTop=0;}} style={{flex:'0 0 auto',padding:'10px 10px',background:'transparent',border:'none',cursor:'pointer',fontSize:'10px',fontWeight:600,color:tab===t.id?'#ffd93d':'#888',borderBottom:tab===t.id?'2px solid #ffd93d':'2px solid transparent',whiteSpace:'nowrap',minHeight:'44px',touchAction:'manipulation'}}>{t.icon} {t.label}</button>))}
-      </div>
+    <div style={{background:'#0f0e17',height:'100dvh',display:'flex',flexDirection:'column',color:'#fffffe',fontFamily:"var(--font-body)",WebkitFontSmoothing:'antialiased',paddingTop:'env(safe-area-inset-top)'}}>
+      <AppHeader toolKey="chord">
+        <button className={`fw-header-btn${showDeg?' is-on':''}`} onClick={()=>setShowDeg(p=>!p)}>
+          {showDeg?'✦ Degrees ON':'Scale Degrees'}
+        </button>
+      </AppHeader>
+
+      <TabBar toolKey="chord" tabs={TABS} active={tab} onChange={(id)=>{setTab(id);if(scrollRef.current)scrollRef.current.scrollTop=0;}} />
       {/* Safe-area bottom padding + extra room for install banner */}
       {/* Scrollable content — flex:1 takes remaining height below header+tabbar */}
       <div ref={scrollRef} style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',overscrollBehaviorY:'none'}}>
@@ -2100,7 +2072,20 @@ export default function App(){
         {tab==='quiz'&&<QuizTab showDeg={showDeg} onChordQuizDone={onChordQuizDone} onDegDone={onDegDone}/>}
         {tab==='weak'&&<WeakTab history={hist} degHist={degHist} srs={srs} showDeg={showDeg} onComplete={onChordQuizDone}/>}
         {tab==='help'&&<HelpTab/>}
-        {tab==='settings'&&<SettingsTab/>}
+        {tab==='settings'&&(<>
+          <div style={{maxWidth:'560px',margin:'0 auto',padding:'14px 14px 0'}}>
+            <div style={{background:'#13121f',border:'1px solid #2a2840',borderRadius:'12px',padding:'12px 13px'}}>
+              <div style={{fontSize:'13px',fontWeight:700,color:'#fff',marginBottom:'8px'}}>📦 Progress backup</div>
+              <div style={{display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}>
+                <button onClick={exportData} style={{background:'#a29bfe22',color:'#a29bfe',border:'1px solid #a29bfe44',padding:'7px 14px',borderRadius:'8px',cursor:'pointer',fontSize:'12px',fontWeight:700,minHeight:'38px',touchAction:'manipulation'}}>Export ↓</button>
+                <label style={{background:'#4ecdc422',color:'#4ecdc4',border:'1px solid #4ecdc444',padding:'7px 14px',borderRadius:'8px',cursor:'pointer',fontSize:'12px',fontWeight:700,minHeight:'38px',display:'flex',alignItems:'center',touchAction:'manipulation'}}>Import ↑<input type="file" accept=".json" onChange={importData} style={{display:'none'}}/></label>
+                {importMsg&&<span style={{fontSize:'11px',color:importMsg.startsWith('✓')?'#00b894':'#ff6363',fontWeight:700}}>{importMsg}</span>}
+                <span style={{fontSize:'10px',color:'#555',marginLeft:'auto'}}>{Object.keys(srs).length} SRS · {hist.length} history · {degHist.length} deg</span>
+              </div>
+            </div>
+          </div>
+          <SettingsTab/>
+        </>)}
       {showAudioHint&&(
           <AudioHintPanel
             onDismiss10={()=>{

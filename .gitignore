@@ -10,6 +10,9 @@ dist-ssr/
 .env
 .env.*
 
+# Local tooling (Claude Code launch config + local settings)
+.claude/
+
 # Logs
 logs/
 *.log
