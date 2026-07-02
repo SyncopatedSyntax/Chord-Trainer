@@ -95,7 +95,9 @@ silent MP3 once and discarded it — the promotion didn't stick.) Trade-off:
 playing may pause background music, and loudness follows the media volume
 (volume buttons), not the ringer. The `AudioHintPanel` ("Unmute your
 ringtone…") now shows **only on old iOS** where layer 2 is best-effort.
-When rolling this fix into the other trainers, copy both layers.
+All five audio trainers now carry this same two-layer fix — it's the toolbox
+standard (see root `CLAUDE.md → Audio`); this file is the reference
+implementation.
 
 ## Before shipping any change
 - `npm run build` must pass.
