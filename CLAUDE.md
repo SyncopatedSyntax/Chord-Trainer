@@ -81,8 +81,21 @@ because validation is enforced live while authoring instead.
 ## Audio
 Web Audio synthesis (no audio assets): `playVoicing(v, mode)` does
 pluck/arpeggio strums via harmonic-series synthesis (`pluckNote()`, up to 6
-harmonics). Includes the standard iOS silent-switch unlock workaround shared
-across the toolbox.
+harmonics).
+
+**iOS silent-switch bypass (two layers):** Web Audio alone is "ambient" on
+iOS and is muted by the hardware ringer switch. Layer 1 (iOS 16.4+): at
+module load, `navigator.audioSession.type='playback'` declares the page as
+real media — Web Audio then ignores the switch (Apple's sanctioned fix).
+Layer 2 (older iOS without that API): `startSilentLoop()` keeps a **looping**
+silent `<audio>` element playing for the life of the page, which promotes the
+session to "playback" (unmute.js technique); it's re-checked on every play
+tap because iOS pauses media on backgrounding. (A previous version played the
+silent MP3 once and discarded it — the promotion didn't stick.) Trade-off:
+playing may pause background music, and loudness follows the media volume
+(volume buttons), not the ringer. The `AudioHintPanel` ("Unmute your
+ringtone…") now shows **only on old iOS** where layer 2 is best-effort.
+When rolling this fix into the other trainers, copy both layers.
 
 ## Before shipping any change
 - `npm run build` must pass.

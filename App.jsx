@@ -236,6 +236,11 @@ function transposeVoicing(v,targetNote){
 }
 
 let _ctx=null,_unlocked=false,_master=null;
+// ── iOS silent-switch fix, layer 1 (iOS 16.4+) ────────────────────────────
+// Audio Session API: declare this page as real media playback. Web Audio then
+// plays through the "playback" session category — same as the Music app — and
+// ignores the hardware ringer/silent switch. Feature-detected; harmless elsewhere.
+try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch(e){}
 function getCtx(){if(!_ctx)_ctx=new(window.AudioContext||window.webkitAudioContext)();if(_ctx.state==='suspended')_ctx.resume();return _ctx;}
 // Shared master bus — keeps the summed amplitude of dense voicings (up to ~30
 // oscillators) below the clipping ceiling instead of every voice hitting the
@@ -244,23 +249,31 @@ function getMaster(ctx){
   if(!_master||_master.context!==ctx){_master=ctx.createGain();_master.gain.value=0.5;_master.connect(ctx.destination);}
   return _master;
 }
-function unlockAudio(){
-  if(_unlocked)return;
-  // ── iOS silent switch fix ─────────────────────────────────────────────
-  // Web Audio alone respects the iOS hardware mute switch (ambient session).
-  // Playing a real <audio> element — even a silent one — promotes the iOS
-  // audio session to "playback" category, which bypasses the silent switch.
-  // Web Audio then inherits that session and plays through regardless of mute.
+// ── iOS silent-switch fix, layer 2 (older iOS without the Audio Session API) ──
+// A real <audio> element that is *continuously playing* promotes the session to
+// "playback", which bypasses the silent switch (the unmute.js technique). The
+// old code here played a silent MP3 once for a few ms and discarded it — the
+// promotion didn't stick, so Web Audio still hit the mute switch. Now we keep
+// one silent element looping for the life of the page instead.
+// Inline silent MP3 (44-byte minimal valid MP3 frame, base64 encoded)
+const SILENT_MP3='data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAFhpbmcAAAAPAAAAAwAAA7AAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb////////////////////////////////////////////////////////////////AAAA8ExBTUUzLjk5LjVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=';
+let _silentLoop=null;
+function startSilentLoop(){
+  // Only needed on iOS builds too old for navigator.audioSession (layer 1).
+  if(navigator.audioSession||!/iphone|ipad|ipod/i.test(navigator.userAgent))return;
   try{
-    // Inline silent MP3 (44-byte minimal valid MP3 frame, base64 encoded)
-    const SILENT_MP3='data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAFhpbmcAAAAPAAAAAwAAA7AAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb////////////////////////////////////////////////////////////////AAAA8ExBTUUzLjk5LjVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=';
-    const audio=new Audio(SILENT_MP3);
-    audio.volume=0.001;
-    // Must be triggered from a user gesture — this function is called from PlayButtons onClick
-    const p=audio.play();
-    if(p&&p.then)p.then(()=>{}).catch(()=>{});
-  }catch(e){}
-  // Also unlock Web Audio context
+    if(!_silentLoop){_silentLoop=new Audio(SILENT_MP3);_silentLoop.loop=true;}
+    if(_silentLoop.paused){
+      // Must run inside a user gesture — callers are tap handlers.
+      const p=_silentLoop.play();
+      if(p&&p.catch)p.catch(()=>{_silentLoop=null;});// retry on a later tap
+    }
+  }catch(e){_silentLoop=null;}
+}
+function unlockAudio(){
+  startSilentLoop();// re-checked every play: iOS pauses media on backgrounding
+  if(_unlocked)return;
+  // Unlock the Web Audio context (must happen inside a user gesture)
   const ctx=getCtx();
   const buf=ctx.createBuffer(1,1,22050);const src=ctx.createBufferSource();
   src.buffer=buf;src.connect(ctx.destination);src.start(0);
@@ -1799,6 +1812,9 @@ export default function App(){
   useEffect(()=>{
     const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
     if(!isIOS)return;
+    // iOS 16.4+: audioSession 'playback' makes audio ignore the silent switch,
+    // so "Unmute your ringtone" would be wrong — hint is for older iOS only.
+    if(navigator.audioSession)return;
     try{
       const launches=parseInt(localStorage.getItem('ct_launches')||'0',10);
       const sup10=parseInt(localStorage.getItem('ct_audio_hint_launch')||'0',10);
