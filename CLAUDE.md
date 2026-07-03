@@ -99,6 +99,11 @@ All five audio trainers now carry this same two-layer fix — it's the toolbox
 standard (see root `CLAUDE.md → Audio`); this file is the reference
 implementation.
 
+Two related standards also apply here: `getMaster()` runs the shared bus
+through a gentle `DynamicsCompressor` (limiter) so fast strums don't stack/clip,
+and `bumpIdle()` suspends the context ~0.4s after the last note (resumed by
+`getCtx()` on the next play) so iOS stops showing "now playing" once quiet.
+
 ## Before shipping any change
 - `npm run build` must pass.
 - If touching `data/chords.json` or `deriveDegrees`/`validateVoicing`, verify

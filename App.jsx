@@ -246,8 +246,27 @@ function getCtx(){if(!_ctx)_ctx=new(window.AudioContext||window.webkitAudioConte
 // oscillators) below the clipping ceiling instead of every voice hitting the
 // destination directly. Created once per context.
 function getMaster(ctx){
-  if(!_master||_master.context!==ctx){_master=ctx.createGain();_master.gain.value=0.5;_master.connect(ctx.destination);}
+  if(!_master||_master.context!==ctx){
+    _master=ctx.createGain();_master.gain.value=0.5;
+    // Gentle limiter after the master so fast repeated strums don't stack/clip.
+    const comp=ctx.createDynamicsCompressor();
+    comp.threshold.value=-10;comp.knee.value=20;comp.ratio.value=4;comp.attack.value=0.003;comp.release.value=0.25;
+    _master.connect(comp);comp.connect(ctx.destination);
+  }
   return _master;
+}
+// Idle-suspend: release the audio session when nothing is sounding so iOS stops
+// showing "now playing" after the sound ends; getCtx() resumes it on the next
+// play. (Toolbox audio standard — see root CLAUDE.md → Audio.)
+let _idleTimer=null,_idleEnd=0;
+function bumpIdle(ctx,end){
+  _idleEnd=Math.max(_idleEnd,end);
+  if(_idleTimer)clearTimeout(_idleTimer);
+  _idleTimer=setTimeout(()=>{
+    _idleTimer=null;
+    if(ctx.currentTime<_idleEnd-0.05)return;
+    if(ctx.state==='running')ctx.suspend().catch(()=>{});
+  },Math.max(0,(_idleEnd-ctx.currentTime)*1000)+400);
 }
 // ── iOS silent-switch fix, layer 2 (older iOS without the Audio Session API) ──
 // A real <audio> element that is *continuously playing* promotes the session to
@@ -307,6 +326,7 @@ function playVoicing(v,mode){
   const notes=v.str.map((f,i)=>f>=0?midiToHz(OPEN_MIDI[i]+f):null).filter(Boolean);
   const gap=mode==='arp'?0.10:0.016;
   notes.forEach((hz,i)=>pluckNote(ctx,hz,now+i*gap));
+  bumpIdle(ctx, now + (notes.length - 1) * gap + 2);
 }
 function PlayButtons({v,size,stack}){
   const[active,setActive]=useState(null);
