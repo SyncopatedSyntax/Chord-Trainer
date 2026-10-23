@@ -149,8 +149,11 @@ const store={
 };
 
 const shuffle=a=>{const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;};
+// Days are UTC calendar days (todayStr), so the arithmetic is done in UTC too.
+// Local-time arithmetic put "tomorrow" on today anywhere east of Greenwich,
+// and lost a day whenever a gap crossed a clock change.
 const todayStr=()=>new Date().toISOString().split('T')[0];
-const addDays=(d,n)=>{const dt=new Date(d);dt.setDate(dt.getDate()+n);return dt.toISOString().split('T')[0];};
+const addDays=(d,n)=>{const dt=new Date(d);dt.setUTCDate(dt.getUTCDate()+n);return dt.toISOString().split('T')[0];};
 
 function updateSRS(card,correct){
   const ef=card?.ef??2.5,reps=card?.reps??0,interval=card?.interval??1;
