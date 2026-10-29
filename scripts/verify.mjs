@@ -47,11 +47,15 @@ section('progressions');
   const list = progs.progressions || progs;
   const v = validateProgressions(list);
   check(v.ok, `validateProgressions: ${v.errors.slice(0, 5).join('; ')}`);
-  // A lower-case numeral is a minor-family chord, upper-case is not.
+  // A lower-case numeral is a minor-family chord, upper-case is not — the
+  // library's own convention: a secondary dominant is written in capitals
+  // (I–II7–V–I, Rhythm Changes' III7–VI7–II7–V7). This checks that the label
+  // matches the chord played; WHICH chord is right is a musical call, settled
+  // against real tunes, not by this rule.
   const MINOR = new Set(['min', 'm7', 'm9', 'm6', 'm7b5', 'dim7', 'mMaj7', 'm13']);
   for (const p of list) for (const c of p.chords) {
     const core = c.rn.replace(/^[b#]/, '');
-    check((core === core.toLowerCase()) === MINOR.has(c.q), `${p.title}: ${c.rn} is played as ${c.q}`);
+    check((core === core.toLowerCase()) === MINOR.has(c.q), `${p.title}: ${c.rn} is played as ${c.q} — a lower-case numeral reads as minor; write a secondary dominant in capitals`);
   }
   done(`${list.length} progressions valid; numeral case matches chord quality`);
 

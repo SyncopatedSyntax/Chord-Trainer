@@ -44,8 +44,16 @@ gate (`npm run verify`, `scripts/verify.mjs`) for what authoring can't see:
   low E string, so its "R" was G, and every Cmaj7#5 in the Progs tab was a
   Gmaj7#5 (fixed 2026-10; it now sits on the A string like the rest). It also
   checks every `QTMPL` template is rooted on C (`TMPL_ROOT`), and that a
-  lower-case numeral is played as a minor-family chord — "ii9" had been
-  entered as a dominant 9 twice.
+  numeral's case matches the chord played: lower-case is minor-family, and a
+  **secondary dominant is written in capitals** (I–II7–V–I, Rhythm Changes'
+  III7–VI7–II7–V7), as the library already did. That rule only checks the
+  label agrees with the chord — *which* chord is right is a musical call, made
+  against real tunes. Two entries read "ii9" over a dominant 9 (D9 in C), and
+  they went different ways: "IΔ9–iiim7–ii9–V9" calls itself a diatonic cycle
+  through the subdominant, so it is Dm9; "I6/9–IV6/9–II9–V13" really is the
+  V of V (Take the A Train's C6–D7–Dm7–G7; Something's F–D7–G), so it stays
+  D9 and is now written II9. (Dm9 there would also barely move: F6/9 and Dm9
+  share four notes.)
 
 `data/progressions.js` holds progression theory: `RN_OFFSETS` (Roman numeral
 → semitone offset), `Q_SUFFIX` (quality key → chord symbol), `QTMPL`
