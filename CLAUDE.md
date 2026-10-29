@@ -30,23 +30,34 @@ shell, drop2, drop3, drop24, spread, quartal, ext, altered), `DEG_HINT`
 
 **No chord shapes are hardcoded in JS** — every voicing lives in
 `data/chords.json` (200+ voicings, `{ id, name, sym, cat, voicings: [{ str,
-deg, sf }] }`). Correctness is enforced differently than the newer trainers
-(no `verify.mjs`):
+deg, sf }] }`). Correctness is enforced at authoring time, plus a Node
+gate (`npm run verify`, `scripts/verify.mjs`) for what authoring can't see:
 - `deriveDegrees(str, rootIdx)` **auto-derives** degree labels from a fret
   shape + root position, so a voicing can't be hand-labelled wrong.
 - `validateVoicing(v)` / `validateChords(chords)` re-check that every labelled
   degree matches the actual pitch class — wired into the editor (see below),
   so bad data gets caught at authoring time, not at runtime.
+- `npm run verify` re-derives every **progression** chord — each slot, in all
+  12 keys, template and open position — from key + numeral, and measures every
+  sounding string from that root. It exists because a template's labels can
+  agree with each other and still be wrong: `maj7s5` was the right grip on the
+  low E string, so its "R" was G, and every Cmaj7#5 in the Progs tab was a
+  Gmaj7#5 (fixed 2026-10; it now sits on the A string like the rest). It also
+  checks every `QTMPL` template is rooted on C (`TMPL_ROOT`), and that a
+  lower-case numeral is played as a minor-family chord — "ii9" had been
+  entered as a dominant 9 twice.
 
 `data/progressions.js` holds progression theory: `RN_OFFSETS` (Roman numeral
 → semitone offset), `Q_SUFFIX` (quality key → chord symbol), `QTMPL`
-(C-rooted template voicings for transposition), `FEEL_TO_CAT` /
+(C-rooted template voicings for transposition — every quality a progression
+uses needs one, or that chord renders with no diagram), `FEEL_TO_CAT` /
 `BROAD_CATS` (6 genre groupings: Jazz, Blues, Rock & Pop, Soul & R&B, Latin,
 Classical).
 
 ## Spaced repetition
 SM-2, same algorithm as Triad Trainer: `updateSRS(card, correct)` →
-`{ ef, interval, reps, nextDue }`. Persisted to `localStorage`: `ct_srs`
+`{ ef, interval, reps, nextDue }`; every grade also bumps `seen`, which sync
+uses to settle two devices' copies of a card. Persisted to `localStorage`: `ct_srs`
 (schedule), `ct_hist` (quiz history per chord/date), `ct_deg_hist`
 (scale-degree quiz results), `ct_mastered` (manually marked chords).
 `getDailyChords()` surfaces ~5 chords/day (due chords sorted by `nextDue` +
@@ -75,8 +86,8 @@ roadmap calls "phase 2" and hasn't built yet. Visual fretboard builder with
 live degree derivation (`deriveDegrees`) and live `validateVoicing` feedback,
 audio preview, reads/writes `data/chords.json` via the File System Access API
 on desktop Chrome/Edge, with a download/import fallback elsewhere. This is
-the actual correctness gate for chord data — there's no Node `verify.mjs`
-because validation is enforced live while authoring instead.
+the correctness gate for a single voicing; `npm run verify` covers the
+progressions built from the templates.
 
 ## Audio
 Web Audio synthesis (no audio assets): `playVoicing(v, mode)` does
@@ -105,7 +116,7 @@ and `bumpIdle()` suspends the context ~0.4s after the last note (resumed by
 `getCtx()` on the next play) so iOS stops showing "now playing" once quiet.
 
 ## Before shipping any change
-- `npm run build` must pass.
+- `npm run verify` and `npm run build` must pass.
 - If touching `data/chords.json` or `deriveDegrees`/`validateVoicing`, verify
   through the editor (`/editor.html`) — add or edit a voicing and confirm
   validation still flags a deliberately wrong degree label.

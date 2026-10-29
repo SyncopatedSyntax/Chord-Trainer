@@ -37,13 +37,18 @@ export const QTMPL = {
   '7b9':    { str: [-1, 3, 2, 3, 2, -1], deg: [null, 'R', '3', 'b7', 'b9', null], sf: 2 },
   '9':      { str: [-1, 3, 2, 3, 3, -1], deg: [null, 'R', '3', 'b7', '9', null], sf: 1 },
   'maj9':   { str: [-1, 3, 2, 4, 3, -1], deg: [null, 'R', '3', '7', '9', null], sf: 1 },
+  // The 9 and maj9 grips with the #11 (F#) on top: e string fret 2.
+  '9s11':   { str: [-1, 3, 2, 3, 3, 2], deg: [null, 'R', '3', 'b7', '9', '#11'], sf: 2 },
+  'maj9s11':{ str: [-1, 3, 2, 4, 3, 2], deg: [null, 'R', '3', '7', '9', '#11'], sf: 2 },
   'm9':     { str: [-1, 3, 1, 3, 3, -1], deg: [null, 'R', 'b3', 'b7', '9', null], sf: 1 },
   '7sus4':  { str: [-1, 3, 3, 3, -1, -1], deg: [null, 'R', '4', 'b7', null, null], sf: 3 },
   '6':      { str: [-1, 3, 2, 2, 3, -1], deg: [null, 'R', '3', '6', '9', null], sf: 2 },
   'm6':     { str: [-1, 3, 1, 2, -1, -1], deg: [null, 'R', 'b3', '6', null, null], sf: 1 },
   '9sus4':  { str: [-1, 3, 3, 3, 3, -1], deg: [null, 'R', '4', 'b7', '9', null], sf: 3 },
   'aug':    { str: [-1, 3, 2, 1, -1, -1], deg: [null, 'R', '3', '#5', null, null], sf: 1 },
-  'maj7s5': { str: [3, 2, 4, -1, 4, -1], deg: ['R', '3', '7', null, '#5', null], sf: 2 },
+  // Rooted on the A string like the rest; it used to sit on the low E string
+  // (3-2-4-x-4-x), which made every "C" maj7#5 a G.
+  'maj7s5': { str: [-1, 3, 2, 4, -1, 4], deg: [null, 'R', '3', '7', null, '#5'], sf: 2 },
   'mMaj7':  { str: [-1, 3, 1, 4, -1, -1], deg: [null, 'R', 'b3', '7', null, null], sf: 1 },
   // ── Triads: COMPACT 4-string on 5-4-3-2 (no top-e barre) ───────────────
   // These are the shapes advanced rock, soul, and fusion players use —

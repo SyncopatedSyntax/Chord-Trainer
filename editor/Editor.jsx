@@ -1,9 +1,9 @@
-import { useState, useMemo, useRef, useCallback } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import ChordDiagram from '../components/ChordDiagram.jsx';
 import { playVoicing } from './audio.js';
 import seed from '../data/chords.json';
 import {
-  CATS, DC, NOTE_NAMES, OPEN_MIDI, DEGREE_ALTS,
+  CATS, DC, OPEN_MIDI, DEGREE_ALTS,
   deriveDegrees, computeStartFret, validateVoicing, validateChords,
 } from '../data/theory.js';
 import { btn, panel, labelCss, serializeArray, Field, Step, code } from './ui.jsx';

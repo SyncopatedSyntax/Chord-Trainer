@@ -925,9 +925,7 @@ function ChordDetail({chord,onBack,showDeg,setShowDeg,mastered,onToggleMastered}
 function Library({showDeg,setShowDeg,mastered,onToggleMastered,scrollRef}){
   const[cat,setCat]=useState('all');
   const[sel,setSel]=useState(null);
-  const[search,setSearch]=useState('');
   const savedScrollY=useRef(0);
-  const[transRoot,setTransRoot]=useState(null);
   const[filterOpen,setFilterOpen]=useState(true);
   const[filterMode,setFilterMode]=useState('family');
   // Family filter
@@ -972,11 +970,11 @@ function Library({showDeg,setShowDeg,mastered,onToggleMastered,scrollRef}){
   const handleSel=id=>{
     savedScrollY.current=scrollRef&&scrollRef.current?scrollRef.current.scrollTop:0;
     if(scrollRef&&scrollRef.current)scrollRef.current.scrollTop=0;
-    setSel(id);setTransRoot(null);
+    setSel(id);
   };
 
   if(chord){
-    return <ChordDetail chord={chord} onBack={()=>{setSel(null);setTransRoot(null);requestAnimationFrame(()=>{if(scrollRef&&scrollRef.current)scrollRef.current.scrollTop=savedScrollY.current;});}} showDeg={showDeg} setShowDeg={setShowDeg} mastered={mastered} onToggleMastered={onToggleMastered}/>;
+    return <ChordDetail chord={chord} onBack={()=>{setSel(null);requestAnimationFrame(()=>{if(scrollRef&&scrollRef.current)scrollRef.current.scrollTop=savedScrollY.current;});}} showDeg={showDeg} setShowDeg={setShowDeg} mastered={mastered} onToggleMastered={onToggleMastered}/>;
   }
 
   // ── Helper: chord type strip (shared by both filter modes)
@@ -1528,16 +1526,6 @@ function BannerStack(){
   // taps inside each card.
   const tap=cb=>e=>{e.stopPropagation();cb();};
 
-  // Shared button style additions for reliable tapping
-  const tapBtn=(extra={})=>({
-    touchAction:'manipulation',
-    WebkitTapHighlightColor:'transparent',
-    pointerEvents:'auto',
-    cursor:'pointer',
-    position:'relative',
-    zIndex:1,
-    ...extra,
-  });
 
   // ── Install actions ───────────────────────────────────────────────────
   const dismissInstall=()=>setTimeout(()=>setShowInstall(false),0);
@@ -1814,7 +1802,6 @@ export default function App(){
   const[mastered,setMastered]=useState(()=>new Set());
   const[showAudioHint,setShowAudioHint]=useState(false);
   const[loaded,setLoaded]=useState(false);
-  const[showData,setShowData]=useState(false);
   const[importMsg,setImportMsg]=useState('');
 
   // Refs for async callbacks — always fresh values, never cause re-renders
@@ -2042,7 +2029,7 @@ export default function App(){
   },[]);
   const onChordQuizDone=useCallback(async results=>{
     const ns={...srsRef.current},nh=[...histRef.current],td=todayStr();
-    for(const r of results){ns[r.id]=updateSRS(ns[r.id],r.correct);nh.push({id:r.id,correct:r.correct,date:td});}
+    for(const r of results){ns[r.id]={...updateSRS(ns[r.id],r.correct),seen:(ns[r.id]?.seen||0)+1};nh.push({id:r.id,correct:r.correct,date:td});}
     await saveSrs(ns);await saveHist(nh);
   },[]); // eslint-disable-line
 
@@ -2055,7 +2042,7 @@ export default function App(){
   // ChordsOfDay is React.memo'd and ignores srsData/onMarkReviewed prop changes,
   // so the 2 setSrs+setHist calls here never cause ChordsOfDay to re-render.
   const onMarkReviewed=useCallback(async id=>{
-    const ns={...srsRef.current,[id]:updateSRS(srsRef.current[id],true)};
+    const ns={...srsRef.current,[id]:{...updateSRS(srsRef.current[id],true),seen:(srsRef.current[id]?.seen||0)+1}};
     const nh=[...histRef.current,{id,correct:true,date:todayStr()}];
     await saveSrs(ns);await saveHist(nh);
   },[]); // eslint-disable-line
@@ -2090,7 +2077,7 @@ export default function App(){
     reader.readAsText(file);
   };
 
-  if(!loaded)return(<div style={{background:'#0f0e17',minHeight:'100vh',minHeight:'-webkit-fill-available',display:'flex',alignItems:'center',justifyContent:'center',color:'#ffd93d',fontSize:'16px'}}>Loading…</div>);
+  if(!loaded)return(<div style={{background:'#0f0e17',minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',color:'#ffd93d',fontSize:'16px'}}>Loading…</div>);
 
   const TABS=[{id:'daily',label:'Today',icon:'🌅'},{id:'library',label:'Library',icon:'📚'},{id:'progs',label:'Progs',icon:'🎵'},{id:'quiz',label:'Quiz',icon:'🎯'},{id:'weak',label:'Weak',icon:'💪'},{id:'help',label:'Guide',icon:'📖'},{id:'settings',label:'Settings',icon:'⚙️'}];
 
