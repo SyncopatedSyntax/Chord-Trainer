@@ -1858,119 +1858,6 @@ export default function App(){
       if(!vp){vp=document.createElement('meta');vp.name='viewport';document.head.prepend(vp);}
       vp.content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover';
     })();
-    // ── Generate app icon via canvas and inject as apple-touch-icon + manifest ──
-    function makeIcon(size){
-      const c=document.createElement('canvas');c.width=c.height=size;
-      const ctx=c.getContext('2d');
-
-      // Full-bleed dark background — let iOS/Android apply their own corner mask
-      ctx.fillStyle='#0f0e17';
-      ctx.fillRect(0,0,size,size);
-
-      // ── Cadd9 open cowboy chord ──────────────────────────────────────────
-      // str=[-1, 3, 2, 0, 3, 0]   deg=[null,'R','3','5','9','3']
-      // Degree colours matching the app's DC object exactly:
-      const DC={'R':'#ff4757','3':'#ffd93d','5':'#778ca3','9':'#2ed573'};
-
-      // 20% padding = safe inside iOS squircle mask (≈22% corner radius)
-      const pad=size*0.20;
-      const openH=size*0.105; // space above nut for open/muted indicators
-
-      const left=pad;
-      const right=size-pad;
-      const nutY=pad+openH;
-      const bottom=size-pad*0.82;
-
-      const gridW=right-left;
-      const gridH=bottom-nutY;
-      const nStrings=6;
-      const nFrets=4;           // show 4 frets; Cadd9 uses frets 1-3
-      const ss=gridW/(nStrings-1);
-      const fs=gridH/nFrets;
-
-      const sx=i=>left+i*ss;
-      const fy=f=>nutY+f*fs;
-
-      const lw=Math.max(2,size*0.006);
-      const dotR=size*0.058;
-      const openR=size*0.037;
-      const nutW=Math.max(3,size*0.014);
-
-      // Fret lines 1–4
-      ctx.lineCap='butt';
-      ctx.strokeStyle='#2d2b45';
-      ctx.lineWidth=lw*0.9;
-      for(let f=1;f<=nFrets;f++){
-        ctx.beginPath();ctx.moveTo(left,fy(f));ctx.lineTo(right,fy(f));ctx.stroke();
-      }
-
-      // String lines
-      ctx.strokeStyle='#3a3858';
-      ctx.lineWidth=lw*0.8;
-      for(let i=0;i<nStrings;i++){
-        ctx.beginPath();ctx.moveTo(sx(i),nutY);ctx.lineTo(sx(i),bottom);ctx.stroke();
-      }
-
-      // Nut
-      ctx.strokeStyle='#cccccc';
-      ctx.lineWidth=nutW;
-      ctx.lineCap='round';
-      ctx.beginPath();ctx.moveTo(left,nutY);ctx.lineTo(right,nutY);ctx.stroke();
-
-      // Notes — drawn per string
-      const notes=[
-        {fret:-1, deg:null},   // str0 low E — muted
-        {fret:3,  deg:'R'},    // str1 A     — fret 3, root
-        {fret:2,  deg:'3'},    // str2 D     — fret 2, major 3rd
-        {fret:0,  deg:'5'},    // str3 G     — open, perfect 5th
-        {fret:3,  deg:'9'},    // str4 B     — fret 3, major 9th
-        {fret:0,  deg:'3'},    // str5 e     — open, major 3rd
-      ];
-
-      notes.forEach(({fret,deg},i)=>{
-        const x=sx(i);
-        const col=DC[deg]||'#ffd93d';
-        const aboveY=nutY-openH*0.52;
-
-        if(fret===-1){
-          // Muted × — same style as app diagrams
-          const xs=openR*0.65;
-          ctx.strokeStyle='#555566';
-          ctx.lineWidth=Math.max(1.5,lw*1.5);
-          ctx.lineCap='round';
-          ctx.beginPath();
-          ctx.moveTo(x-xs,aboveY-xs);ctx.lineTo(x+xs,aboveY+xs);
-          ctx.moveTo(x+xs,aboveY-xs);ctx.lineTo(x-xs,aboveY+xs);
-          ctx.stroke();
-        } else if(fret===0){
-          // Open circle above nut, coloured by degree
-          ctx.beginPath();ctx.arc(x,aboveY,openR,0,Math.PI*2);
-          ctx.strokeStyle=col;
-          ctx.lineWidth=Math.max(1.5,lw*1.7);
-          ctx.lineCap='round';
-          ctx.stroke();
-        } else {
-          // Filled dot, centred in fret slot (sf=1 so row = fret-1)
-          const y=fy(fret-1)+fs*0.5;
-          ctx.beginPath();ctx.arc(x,y,dotR,0,Math.PI*2);
-          ctx.fillStyle=col;ctx.fill();
-        }
-      });
-
-      return c.toDataURL('image/png');
-    }
-
-    const iconUrl=makeIcon(512);
-    const iconUrl180=makeIcon(180);
-
-    // apple-touch-icon (iOS home screen)
-    const setLink=(rel,sizes,href)=>{
-      let l=document.querySelector(`link[rel="${rel}"]${sizes?`[sizes="${sizes}"]`:''}`);
-      if(!l){l=document.createElement('link');l.rel=rel;if(sizes)l.sizes=sizes;document.head.appendChild(l);}
-      l.href=href;
-    };
-    setLink('apple-touch-icon','180x180',iconUrl180);
-    setLink('icon','512x512',iconUrl);
 
     // ── iOS standalone scroll offset fix ─────────────────────────────────
     // In standalone PWA mode, WebKit initialises window.scrollY to the
@@ -1989,13 +1876,7 @@ export default function App(){
     setMeta('viewport','width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover');
     setMeta('apple-mobile-web-app-capable','yes');
     setMeta('apple-mobile-web-app-status-bar-style','black-translucent');
-    setMeta('apple-mobile-web-app-title','Fretworks');
 
-    // Single PWA: reference the unified shell manifest (one manifest per origin)
-    // instead of generating a competing per-app manifest.
-    let mlink=document.querySelector('link[rel="manifest"]');
-    if(!mlink){mlink=document.createElement('link');mlink.rel='manifest';document.head.appendChild(mlink);}
-    mlink.href='/manifest.webmanifest';
 
     return()=>{document.head.removeChild(style);window.removeEventListener('scroll',lockScroll);};
   },[]);
@@ -2050,7 +1931,7 @@ export default function App(){
   const exportData=()=>{
     const json=JSON.stringify({srs,hist,degHist,mastered:[...mastered],v:2,exported:new Date().toISOString()},null,2);
     // Blob URL (not a data: URI) — no browser URL-length cap, so large histories
-    // export reliably. Mirrors the manifest blob approach above.
+    // export reliably.
     const blob=new Blob([json],{type:'application/json'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');

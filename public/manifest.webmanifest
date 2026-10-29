@@ -1,0 +1,29 @@
+{
+  "id": "/chord/",
+  "name": "Chord Trainer",
+  "short_name": "Chords",
+  "description": "Build a working chord vocabulary with spaced-repetition practice, quizzes, and progressions of the day.",
+  "start_url": "/chord/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f0e17",
+  "theme_color": "#0f0e17",
+  "icons": [
+    {
+      "src": "/chord/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/chord/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/chord/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
